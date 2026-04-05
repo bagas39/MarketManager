@@ -12,7 +12,10 @@ export default defineConfig({
                 'resources/js/penjualan.js',
                 'resources/js/manajemen_stok.js',
                 'resources/js/kasir.js',
-                'resources/js/manajemen_pengguna.js'
+                'resources/js/laporan_keuangan.js',
+                'resources/js/pengguna.js',
+                'resources/js/prediksi_stok.js',
+                'resources/js/stok_opname.js'
             ],
             refresh: true,
         }),

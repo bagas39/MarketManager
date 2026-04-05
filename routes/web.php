@@ -9,7 +9,9 @@ use App\Http\Controllers\KasirController;
 use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\PenggunaController;
 use App\Http\Middleware\CekLogin;
-
+use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\PrediksiStokController;
+use App\Http\Controllers\StokOpnameController;
 
 // Auth Routes
 Route::get('/login', [AuthController::class, 'index'])->name('login');
@@ -53,10 +55,20 @@ Route::put('/api/users/{id}', [PenggunaController::class, 'update']);
 Route::delete('/api/users/{id}', [PenggunaController::class, 'destroy']);
 
 // Laporan Keuangan Routes
+Route::get('/laporan_keuangan', [LaporanController::class, 'index']);
+Route::get('/api/laporan_keuangan', [LaporanController::class, 'getLaporan']);
+
 
 // Prediksi Stok
+Route::get('/prediksi_stok', [PrediksiStokController::class, 'index']);
+Route::get('/api/prediksi_stok/barang', [PrediksiStokController::class, 'getBarang']);
+Route::post('/api/prediksi_stok/stok', [PrediksiStokController::class, 'hitung']);
 
 // Stok Opname
+Route::get('/stok_opname', [StokOpnameController::class, 'index']);
+Route::get('/api/stok_opname/data', [StokOpnameController::class, 'data']);
+Route::post('/api/stok_opname/simpan', [StokOpnameController::class, 'simpan']);
+
 
 });
 
