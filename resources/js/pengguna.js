@@ -57,17 +57,18 @@ window.closeAddModal = function() {
 window.saveUser = async function() {
     const btn = document.getElementById('btn-save');
     const username = document.getElementById('add-username').value.trim();
+    const password = document.getElementById('add-password').value; // Ambil password
     const nama = document.getElementById('add-nama').value.trim();
     const role = document.getElementById('add-role').value;
 
-    if(!username || !nama || !role) return alert("Semua kolom wajib diisi!");
+    if(!username || !nama || !role || !password) return alert("Semua kolom wajib diisi termasuk password!");
 
     btn.disabled = true; btn.textContent = "Menyimpan...";
     try {
         const res = await fetch('/api/users', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-            body: JSON.stringify({ username, nama, role })
+            body: JSON.stringify({ username, password, nama, role })
         });
         const data = await res.json();
         if(res.ok && data.success) {
@@ -90,6 +91,7 @@ window.openEditModal = function(id) {
 
     document.getElementById('edit-id').value = user.id;
     document.getElementById('edit-username').value = user.username;
+    document.getElementById('edit-password').value = '';
     document.getElementById('edit-nama').value = user.nama;
     document.getElementById('edit-role').value = user.role;
 
@@ -106,17 +108,24 @@ window.updateUser = async function() {
     const btn = document.getElementById('btn-update');
     const id = document.getElementById('edit-id').value;
     const username = document.getElementById('edit-username').value.trim();
+    const password = document.getElementById('edit-password').value;
     const nama = document.getElementById('edit-nama').value.trim();
     const role = document.getElementById('edit-role').value;
 
-    if(!username || !nama || !role) return alert("Semua kolom wajib diisi!");
+    if(!username || !nama || !role) return alert("Username, Nama, dan Role wajib diisi!");
 
     btn.disabled = true; btn.textContent = "Menyimpan...";
+    
+    const payload = { username, nama, role };
+    if (password !== '') {
+        payload.password = password; 
+    }
+
     try {
         const res = await fetch(`/api/users/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-            body: JSON.stringify({ username, nama, role })
+            body: JSON.stringify(payload)
         });
         const data = await res.json();
         if(res.ok && data.success) {

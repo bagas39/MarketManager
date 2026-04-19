@@ -42,6 +42,10 @@
                     <input type="text" id="add-username" required class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                 </div>
                 <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">Password</label>
+                    <input type="password" id="add-password" required class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+                <div>
                     <label class="block text-sm font-semibold text-slate-600 mb-1">Nama Lengkap</label>
                     <input type="text" id="add-nama" required class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                 </div>
@@ -72,6 +76,10 @@
                 <div>
                     <label class="block text-sm font-semibold text-slate-600 mb-1">Username (Untuk Login)</label>
                     <input type="text" id="edit-username" required class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-600 mb-1">Password Baru <span class="text-xs font-normal text-slate-400">(Kosongkan jika tidak diubah)</span></label>
+                    <input type="password" id="edit-password" class="w-full px-3 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-slate-600 mb-1">Nama Lengkap</label>

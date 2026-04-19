@@ -3,10 +3,17 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
+use App\Services\JsonDataService;
 
 class PembelianController extends Controller
 {
+    protected $db;
+
+    public function __construct(JsonDataService $db)
+    {
+        $this->db = $db;
+    }
+
     public function index() { return view('transaksi_pembelian'); }
 
     public function store(Request $request)
@@ -19,9 +26,7 @@ class PembelianController extends Controller
             ]);
 
             $total = 0;
-            $masterBarang = Session::get('master_barang', []);
-            if (!is_array($masterBarang)) { $masterBarang = []; }
-
+            $masterBarang = $this->db->getBarang();
             $itemsLengkap = [];
 
             foreach ($data['items'] as $item) {
@@ -70,11 +75,10 @@ class PembelianController extends Controller
                 ];
             }
 
-            Session::put('master_barang', $masterBarang);
+            $this->db->saveBarang($masterBarang);
 
             $newId = rand(10000, 99999);
-            $history = Session::get('mock_riwayat_pembelian', []);
-            if (!is_array($history)) { $history = []; }
+            $history = $this->db->getPembelian();
 
             array_unshift($history, [
                 'id_pembelian'      => $newId,
@@ -83,7 +87,8 @@ class PembelianController extends Controller
                 'tanggal_pembelian' => now()->toDateTimeString(),
                 'items'             => $itemsLengkap 
             ]);
-            Session::put('mock_riwayat_pembelian', $history);
+            
+            $this->db->savePembelian($history);
 
             return response()->json(['success' => true, 'id_pembelian' => $newId, 'message' => 'Stok berhasil diperbarui!']);
 
@@ -94,8 +99,7 @@ class PembelianController extends Controller
 
     public function history(Request $request)
     {
-        $history = Session::get('mock_riwayat_pembelian', []);
-        if (!is_array($history)) { $history = []; }
+        $history = $this->db->getPembelian();
         
         $search = $request->query('search_supplier');
         if ($search) {

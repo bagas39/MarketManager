@@ -4,19 +4,15 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use App\Services\JsonDataService;
 
 class AuthController extends Controller
 {
-    private function initMasterUsers()
+    protected $db;
+
+    public function __construct(JsonDataService $db)
     {
-        if (!Session::has('master_users')) {
-            Session::put('master_users', [
-                ['id' => 1, 'username' => 'owner', 'nama' => 'Owner', 'role' => 'Owner'],
-                ['id' => 2, 'username' => 'kasir', 'nama' => 'Kasir', 'role' => 'Kasir'],
-                ['id' => 3, 'username' => 'gudang', 'nama' => 'Gudang', 'role' => 'Gudang'],
-                ['id' => 4, 'username' => 'spv', 'nama' => 'SPV', 'role' => 'Supervisor'],
-            ]);
-        }
+        $this->db = $db;
     }
 
     public function index()
@@ -29,17 +25,15 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $this->initMasterUsers();
-
         $username = $request->username;
         $password = $request->password;
 
-        $users = Session::get('master_users', []);
+        $users = $this->db->getUsers();
         
         $user = collect($users)->firstWhere('username', $username);
 
-        if ($user && $password === '12345') {
-
+        if ($user && isset($user['password']) && $user['password'] === $password) {
+            
             Session::put('user_name', $user['nama']);
             Session::put('user_role', $user['role']);
 
@@ -51,13 +45,12 @@ class AuthController extends Controller
             return redirect('/'); 
         }
 
-        return back()->with('error', 'Username tidak ditemukan atau Password salah. (Hint: pakai password "12345")');
+        return back()->with('error', 'Username tidak ditemukan atau Password salah.');
     }
 
     public function logout()
     {
         Session::forget(['user_name', 'user_role']);
-        
         return redirect('/login');
     }
 }

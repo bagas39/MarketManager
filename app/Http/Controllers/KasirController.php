@@ -3,14 +3,21 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
+use App\Services\JsonDataService;
 
 class KasirController extends Controller
 {
+    protected $db;
+
+    public function __construct(JsonDataService $db)
+    {
+        $this->db = $db;
+    }
+
     public function index() { return view('kasir'); }
 
     public function getBarang() {
-        return response()->json(Session::get('master_barang', []));
+        return response()->json($this->db->getBarang());
     }
 
     public function storeTransaksi(Request $request)
@@ -22,9 +29,7 @@ class KasirController extends Controller
                 return response()->json(['success' => false, 'message' => 'Item tidak boleh kosong!'], 400);
             }
 
-            $masterBarang = Session::get('master_barang', []);
-            if (!is_array($masterBarang)) { $masterBarang = []; }
-            
+            $masterBarang = $this->db->getBarang();
             $enrichedItems = [];
             $total = 0;
 
@@ -34,18 +39,25 @@ class KasirController extends Controller
 
                 if (!$idBarang) continue;
 
-                $hargaJual = 3500;
-                $namaBarang = 'Item Unknown';
+                $barangDitemukan = false;
 
-                foreach ($masterBarang as $idx => $mb) {
+                foreach ($masterBarang as $idx => &$mb) {
                     if ($mb['id_barang'] == $idBarang) {
                         $hargaJual = $mb['harga_jual'];
                         $namaBarang = $mb['nama_barang'];
+                        
+                        if ($mb['stok'] < $jumlah) {
+                             return response()->json(['success' => false, 'message' => "Stok $namaBarang tidak mencukupi!"], 400);
+                        }
 
-                        $masterBarang[$idx]['stok'] -= $jumlah; 
-
+                        $mb['stok'] -= $jumlah; 
+                        $barangDitemukan = true;
                         break;
                     }
+                }
+
+                if (!$barangDitemukan) {
+                    return response()->json(['success' => false, 'message' => "Barang dengan ID $idBarang tidak ditemukan di database!"], 404);
                 }
 
                 $subtotal = $hargaJual * $jumlah;
@@ -61,7 +73,7 @@ class KasirController extends Controller
                 $total += $subtotal;
             }
 
-            Session::put('master_barang', $masterBarang);
+            $this->db->saveBarang($masterBarang);
 
             $newTransaction = [
                 'id_penjualan' => rand(5000, 9999),
@@ -71,10 +83,9 @@ class KasirController extends Controller
                 'items' => $enrichedItems 
             ];
 
-            $history = Session::get('history_penjualan', []);
-            if (!is_array($history)) { $history = []; }
+            $history = $this->db->getPenjualan();
             array_unshift($history, $newTransaction); 
-            Session::put('history_penjualan', $history);
+            $this->db->savePenjualan($history);
 
             return response()->json([
                 'success' => true,
@@ -83,10 +94,7 @@ class KasirController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error Server: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Error Server: ' . $e->getMessage()], 500);
         }
     }
 }

@@ -3,10 +3,17 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
+use App\Services\JsonDataService;
 
 class StokOpnameController extends Controller
 {
+    protected $db;
+
+    public function __construct(JsonDataService $db)
+    {
+        $this->db = $db;
+    }
+
     public function index()
     {
         return view('stok_opname');
@@ -14,15 +21,7 @@ class StokOpnameController extends Controller
 
     public function data(Request $request)
     {
-        $masterBarang = Session::get('master_barang', []);
-
-        if (empty($masterBarang)) {
-            $masterBarang = [
-                ['id_barang' => 1001, 'nama_barang' => 'Minyak Goreng', 'stok' => 10],
-                ['id_barang' => 1002, 'nama_barang' => 'Beras 5kg', 'stok' => 5],
-            ];
-            Session::put('master_barang', $masterBarang);
-        }
+        $masterBarang = $this->db->getBarang();
 
         $allData = [];
         foreach ($masterBarang as $barang) {
@@ -43,7 +42,7 @@ class StokOpnameController extends Controller
     public function simpan(Request $request){
         $items = $request->input('items'); 
         
-        $masterBarang = Session::get('master_barang', []);
+        $masterBarang = $this->db->getBarang();
 
         foreach ($items as $item) {
             foreach ($masterBarang as &$barang) {
@@ -54,7 +53,7 @@ class StokOpnameController extends Controller
             }
         }
 
-        Session::put('master_barang', $masterBarang);
+        $this->db->saveBarang($masterBarang);
 
         return response()->json([
             'success' => true,

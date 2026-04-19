@@ -3,17 +3,23 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
+use App\Services\JsonDataService;
 
 class TransaksiController extends Controller
 {
+    protected $db;
+
+    public function __construct(JsonDataService $db)
+    {
+        $this->db = $db;
+    }
+
     public function list(Request $request)
     {
         try {
             $searchId = $request->query('search_id');
 
-            $mockSales = Session::get('history_penjualan', []);
-            if (!is_array($mockSales)) { $mockSales = []; }
+            $mockSales = $this->db->getPenjualan();
 
             if ($searchId) {
                 $mockSales = array_filter($mockSales, fn($s) => stripos((string)($s['id_penjualan'] ?? ''), $searchId) !== false);
@@ -30,9 +36,7 @@ class TransaksiController extends Controller
 
     public function detail($id)
     {
-        $history = Session::get('history_penjualan', []);
-        if (!is_array($history)) { $history = []; }
-
+        $history = $this->db->getPenjualan();
         $trx = collect($history)->firstWhere('id_penjualan', $id);
 
         if (!$trx) {
@@ -45,9 +49,7 @@ class TransaksiController extends Controller
                 'nama_kasir' => $trx['nama_kasir'] ?? 'Kasir',
                 'tanggal_penjualan' => $trx['tanggal_penjualan'] ?? now()->toDateTimeString()
             ],
-            'items' => $trx['items'] ?? [
-                ['id_barang' => 1001, 'nama_barang' => 'Produk di Transaksi #' . $id, 'jumlah' => 1, 'subtotal' => $trx['total_harga'] ?? 0, 'harga_jual' => $trx['total_harga'] ?? 0]
-            ],
+            'items' => $trx['items'] ?? [],
             'summary' => [
                 'total' => $trx['total_harga'] ?? 0
             ]
@@ -56,9 +58,7 @@ class TransaksiController extends Controller
 
     public function edit(Request $request, $id)
     {
-        $history = Session::get('history_penjualan', []);
-        if (!is_array($history)) { $history = []; }
-
+        $history = $this->db->getPenjualan();
         $index = collect($history)->search(fn($trx) => ($trx['id_penjualan'] ?? null) == $id);
 
         if ($index === false) {
@@ -70,7 +70,7 @@ class TransaksiController extends Controller
             return response()->json(['success' => false, 'message' => 'Transaksi minimal harus memiliki 1 item.'], 400);
         }
 
-        $masterBarang = collect(Session::get('master_barang', []));
+        $masterBarang = collect($this->db->getBarang());
         $totalBaru = 0;
 
         foreach ($items as &$item) {
@@ -91,7 +91,7 @@ class TransaksiController extends Controller
         $history[$index]['items'] = $items;
         $history[$index]['total_harga'] = $totalBaru;
 
-        Session::put('history_penjualan', $history);
+        $this->db->savePenjualan($history);
 
         return response()->json([
             'success' => true, 

@@ -3,21 +3,15 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
+use App\Services\JsonDataService;
 
 class PenggunaController extends Controller
 {
-    private function getMasterUsers()
+    protected $db;
+
+    public function __construct(JsonDataService $db)
     {
-        if (!Session::has('master_users')) {
-            Session::put('master_users', [
-                ['id' => 1, 'username' => 'owner', 'nama' => 'Owner', 'role' => 'Owner'],
-                ['id' => 2, 'username' => 'kasir', 'nama' => 'Kasir', 'role' => 'Kasir'],
-                ['id' => 3, 'username' => 'gudang', 'nama' => 'Gudang', 'role' => 'Gudang'],
-                ['id' => 4, 'username' => 'spv', 'nama' => 'SPV', 'role' => 'Supervisor'],
-            ]);
-        }
-        return Session::get('master_users');
+        $this->db = $db;
     }
 
     public function index()
@@ -27,14 +21,18 @@ class PenggunaController extends Controller
 
     public function listUsers()
     {
-        $users = $this->getMasterUsers();
+        $users = collect($this->db->getUsers())->map(function ($user) {
+            unset($user['password']); 
+            return $user;
+        });
+        
         return response()->json($users);
     }
 
     public function store(Request $request)
     {
         try {
-            $users = $this->getMasterUsers();
+            $users = $this->db->getUsers();
 
             $exists = collect($users)->contains('username', $request->username);
             if ($exists) {
@@ -43,15 +41,15 @@ class PenggunaController extends Controller
 
             $newId = collect($users)->max('id') + 1;
             
-            $newUser = [
+            $users[] = [
                 'id' => $newId,
                 'username' => $request->username,
+                'password' => $request->password,
                 'nama' => $request->nama,
                 'role' => $request->role
             ];
 
-            $users[] = $newUser;
-            Session::put('master_users', $users);
+            $this->db->saveUsers($users);
 
             return response()->json(['success' => true, 'message' => 'User berhasil ditambahkan!']);
         } catch (\Exception $e) {
@@ -62,7 +60,7 @@ class PenggunaController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $users = $this->getMasterUsers();
+            $users = $this->db->getUsers();
             $index = collect($users)->search(fn($u) => $u['id'] == $id);
 
             if ($index === false) {
@@ -80,8 +78,12 @@ class PenggunaController extends Controller
             $users[$index]['username'] = $request->username;
             $users[$index]['nama'] = $request->nama;
             $users[$index]['role'] = $request->role;
+            
+            if ($request->filled('password')) {
+                $users[$index]['password'] = $request->password;
+            }
 
-            Session::put('master_users', $users);
+            $this->db->saveUsers($users);
 
             return response()->json(['success' => true, 'message' => 'User berhasil diperbarui!']);
         } catch (\Exception $e) {
@@ -92,7 +94,7 @@ class PenggunaController extends Controller
     public function destroy($id)
     {
         try {
-            $users = $this->getMasterUsers();
+            $users = $this->db->getUsers();
             $index = collect($users)->search(fn($u) => $u['id'] == $id);
 
             if ($index === false) {
@@ -100,7 +102,7 @@ class PenggunaController extends Controller
             }
 
             array_splice($users, $index, 1);
-            Session::put('master_users', $users);
+            $this->db->saveUsers($users);
 
             return response()->json(['success' => true, 'message' => 'User berhasil dihapus!']);
         } catch (\Exception $e) {
