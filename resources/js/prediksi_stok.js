@@ -1,4 +1,5 @@
 let barangData = []; 
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 async function fetchBarangPrediksi() {
     const selectBarang = document.getElementById("barangId");
     if (!selectBarang) return;
@@ -63,7 +64,7 @@ window.hitungPrediksi = async function() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-CSRF-TOKEN': csrfToken
             },
             body: JSON.stringify({
                 barangId: barangId,

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PembelianController;
 use App\Http\Controllers\StokController;
@@ -8,75 +9,86 @@ use App\Http\Controllers\BarangController;
 use App\Http\Controllers\KasirController; 
 use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\PenggunaController;
-use App\Http\Middleware\CekLogin;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\PrediksiStokController;
 use App\Http\Controllers\StokOpnameController;
 
-// Auth Routes
-Route::get('/login', [AuthController::class, 'index'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
-Route::get('/logout', [AuthController::class, 'logout']);
-Route::get('/api/me', function () {
-    if (!session()->has('user_role')) return response()->json(null);
-    return response()->json([
-        'nama' => session('user_name'),
-        'role' => session('user_role')
-    ]);
+// 1. AREA GUEST
+
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
+    
+    // Rute Register
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [AuthController::class, 'register']);
 });
 
-Route::middleware([CekLogin::class])->group(function () {
 
-// Kasir Routes
-Route::get('/', [KasirController::class, 'index']); 
-Route::get('/api/barang', [BarangController::class, 'getBarang']);
-Route::post('/api/transaksi', [KasirController::class, 'storeTransaksi']);
+// 2. AREA AUTH 
 
-// Transaksi Pembelian Routes
-Route::get('/transaksi_pembelian', [PembelianController::class, 'index']);
-Route::post('/pembelian/store', [PembelianController::class, 'store']);
-Route::get('/pembelian/history', [PembelianController::class, 'history']);
+Route::middleware('auth')->group(function () {
+    
+    // Rute Umum
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::get('/api/me', function () {
+        return response()->json(['nama' => Auth::user()->name, 'role' => Auth::user()->role]);
+    });
 
-// Manajemen Stok Routes
-Route::get('/manajemen_stok', [StokController::class, 'index']);
-Route::get('/api/manajemen_stok', [BarangController::class, 'listStok']);
+    //  KASIR ( Kasir, Supervisor) 
+    Route::middleware('role:Kasir,Supervisor')->group(function () {
+        Route::get('/', [KasirController::class, 'index']); 
+        Route::get('/api/barang', [BarangController::class, 'getBarang']);
+        Route::post('/api/transaksi', [KasirController::class, 'storeTransaksi']);
+    });
 
-// Transaksi Penjualan Routes
-Route::view('/transaksi_penjualan', 'transaksi_penjualan');
-Route::get('/api/transaksi_penjualan', [TransaksiController::class, 'list']);
-Route::get('/api/transaksi_detail/{id}', [TransaksiController::class, 'detail']);
-Route::put('/api/transaksi/{id}', [TransaksiController::class, 'edit']);
+    //  TRANSAKSI PENJUALAN ( Supervisor) 
+    Route::middleware('role:Supervisor')->group(function () {
+        Route::view('/transaksi_penjualan', 'transaksi_penjualan');
+        Route::get('/api/transaksi_penjualan', [TransaksiController::class, 'list']);
+        Route::get('/api/transaksi_detail/{id}', [TransaksiController::class, 'detail']);
+        Route::put('/api/transaksi/{id}', [TransaksiController::class, 'edit']);
+    });
 
-// Manajemen Pengguna Routes
-Route::get('/manajemen_pengguna', [PenggunaController::class, 'index']);
-Route::get('/api/users', [PenggunaController::class, 'listUsers']);
-Route::post('/api/users', [PenggunaController::class, 'store']);
-Route::put('/api/users/{id}', [PenggunaController::class, 'update']);
-Route::delete('/api/users/{id}', [PenggunaController::class, 'destroy']);
+    //  MANAJEMEN STOK ( Kasir, Gudang, Supervisor) 
+    Route::middleware('role:Kasir,Gudang,Supervisor')->group(function () {
+        Route::get('/manajemen_stok', [StokController::class, 'index']);
+        Route::get('/api/manajemen_stok', [BarangController::class, 'listStok']);
+    });
 
-// Laporan Keuangan Routes
-Route::get('/laporan_keuangan', [LaporanController::class, 'index']);
-Route::get('/api/laporan_keuangan', [LaporanController::class, 'getLaporan']);
+    //  TRANSAKSI PEMBELIAN ( Gudang, Supervisor) 
+    Route::middleware('role:Gudang,Supervisor')->group(function () {
+        Route::get('/transaksi_pembelian', [PembelianController::class, 'index']);
+        Route::post('/pembelian/store', [PembelianController::class, 'store']);
+        Route::get('/pembelian/history', [PembelianController::class, 'history']);
+    });
 
+    //  STOK OPNAME ( Gudang, Supervisor) 
+    Route::middleware('role:Gudang,Supervisor')->group(function () {
+        Route::get('/stok_opname', [StokOpnameController::class, 'index']);
+        Route::get('/api/stok_opname/data', [StokOpnameController::class, 'data']);
+        Route::post('/api/stok_opname/simpan', [StokOpnameController::class, 'simpan']);
+    });
 
-// Prediksi Stok
-Route::get('/prediksi_stok', [PrediksiStokController::class, 'index']);
-Route::get('/api/prediksi_stok/barang', [PrediksiStokController::class, 'getBarang']);
-Route::post('/api/prediksi_stok/stok', [PrediksiStokController::class, 'hitung']);
+    //  PREDIKSI STOK ( Gudang, Supervisor) 
+    Route::middleware('role:Gudang,Supervisor')->group(function () {
+        Route::get('/prediksi_stok', [PrediksiStokController::class, 'index']);
+        Route::get('/api/prediksi_stok/barang', [PrediksiStokController::class, 'getBarang']);
+        Route::post('/api/prediksi_stok/stok', [PrediksiStokController::class, 'hitung']);
+    });
 
-// Stok Opname
-Route::get('/stok_opname', [StokOpnameController::class, 'index']);
-Route::get('/api/stok_opname/data', [StokOpnameController::class, 'data']);
-Route::post('/api/stok_opname/simpan', [StokOpnameController::class, 'simpan']);
+    //  MANAJEMEN PENGGUNA ( Owner, Supervisor) 
+    Route::middleware('role:Owner,Supervisor')->group(function () {
+        Route::get('/manajemen_pengguna', [PenggunaController::class, 'index']);
+        Route::get('/api/users', [PenggunaController::class, 'listUsers']);
+        Route::post('/api/users', [PenggunaController::class, 'store']);
+        Route::put('/api/users/{id}', [PenggunaController::class, 'update']);
+        Route::delete('/api/users/{id}', [PenggunaController::class, 'destroy']);
+    });
 
-
-});
-
-// static
-Route::view('/welcome', 'welcome');
-
-// flush
-Route::get('/flush', function () {
-    \Illuminate\Support\Facades\Session::flush();
-    return redirect('/login')->with('error', 'berhasil reset session');
+    //  LAPORAN KEUANGAN ( Owner) 
+    Route::middleware('role:Owner')->group(function () {
+        Route::get('/laporan_keuangan', [LaporanController::class, 'index']);
+        Route::get('/api/laporan_keuangan', [LaporanController::class, 'getLaporan']);
+    });
 });

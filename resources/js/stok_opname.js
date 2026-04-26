@@ -2,6 +2,7 @@ let inventoryData = [];
 const messageModalEl = document.getElementById('message-modal');
 const messageTitleEl = document.getElementById('message-title');
 const messageBodyEl = document.getElementById('message-body');
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 async function fetchOpnameData() {
     const tbody = document.getElementById('opname-table-body');
     if (!tbody) return;
@@ -87,7 +88,7 @@ window.simpanOpname = async function() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-CSRF-TOKEN': csrfToken
             },
             body: JSON.stringify({ items: inventoryData })
         });
