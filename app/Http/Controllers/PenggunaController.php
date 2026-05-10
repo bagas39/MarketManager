@@ -3,110 +3,93 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\JsonDataService;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class PenggunaController extends Controller
 {
-    protected $db;
-
-    public function __construct(JsonDataService $db)
-    {
-        $this->db = $db;
-    }
-
-    public function index()
-    {
-        return view('manajemen_pengguna');
-    }
+    public function index() { return view('manajemen_pengguna'); }
 
     public function listUsers()
     {
-        $users = collect($this->db->getUsers())->map(function ($user) {
-            unset($user['password']); 
-            return $user;
+        // BEST PRACTICE: Ambil kolom yang dibutuhkan saja
+        $users = User::select('id', 'email', 'name', 'role')->get()->map(function($u) {
+            return [
+                'id' => $u->id,
+                'username' => $u->email, 
+                'nama' => $u->name,      
+                'role' => $u->role
+            ];
         });
-        
         return response()->json($users);
     }
 
     public function store(Request $request)
     {
         try {
-            $users = $this->db->getUsers();
+            $validated = $request->validate([
+                'username' => 'required|email|unique:users,email',
+                'nama'     => 'required|string|max:255',
+                'password' => 'required|string|min:6',
+                'role'     => 'required|in:Kasir,Gudang,Supervisor,Owner'
+            ], [
+                'username.unique' => 'Username/Email sudah digunakan!'
+            ]);
 
-            $exists = collect($users)->contains('username', $request->username);
-            if ($exists) {
-                return response()->json(['success' => false, 'message' => 'Username sudah digunakan!'], 400);
-            }
-
-            $newId = collect($users)->max('id') + 1;
-            
-            $users[] = [
-                'id' => $newId,
-                'username' => $request->username,
-                'password' => $request->password,
-                'nama' => $request->nama,
-                'role' => $request->role
-            ];
-
-            $this->db->saveUsers($users);
+            User::create([
+                'name' => $validated['nama'],
+                'email' => $validated['username'],
+                'password' => Hash::make($validated['password']),
+                'role' => $validated['role']
+            ]);
 
             return response()->json(['success' => true, 'message' => 'User berhasil ditambahkan!']);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['success' => false, 'message' => $e->validator->errors()->first()], 422);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan server.'], 500);
         }
     }
 
     public function update(Request $request, $id)
     {
         try {
-            $users = $this->db->getUsers();
-            $index = collect($users)->search(fn($u) => $u['id'] == $id);
-
-            if ($index === false) {
-                return response()->json(['success' => false, 'message' => 'User tidak ditemukan!'], 404);
-            }
-
-            $usernameExists = collect($users)->contains(function ($u) use ($id, $request) {
-                return $u['username'] === $request->username && $u['id'] != $id;
-            });
-
-            if ($usernameExists) {
-                return response()->json(['success' => false, 'message' => 'Username sudah dipakai user lain!'], 400);
-            }
-
-            $users[$index]['username'] = $request->username;
-            $users[$index]['nama'] = $request->nama;
-            $users[$index]['role'] = $request->role;
+            $user = User::findOrFail($id);
             
-            if ($request->filled('password')) {
-                $users[$index]['password'] = $request->password;
-            }
+            $validated = $request->validate([
+                'username' => 'required|email|unique:users,email,'.$id,
+                'nama'     => 'required|string|max:255',
+                'password' => 'nullable|string|min:6',
+                'role'     => 'required|in:Kasir,Gudang,Supervisor,Owner'
+            ], [
+                'username.unique' => 'Username/Email sudah dipakai user lain!'
+            ]);
 
-            $this->db->saveUsers($users);
+            $user->name = $validated['nama'];
+            $user->email = $validated['username'];
+            $user->role = $validated['role'];
+            
+            if (!empty($validated['password'])) {
+                $user->password = Hash::make($validated['password']);
+            }
+            
+            $user->save();
 
             return response()->json(['success' => true, 'message' => 'User berhasil diperbarui!']);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['success' => false, 'message' => $e->validator->errors()->first()], 422);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan server.'], 500);
         }
     }
 
     public function destroy($id)
     {
         try {
-            $users = $this->db->getUsers();
-            $index = collect($users)->search(fn($u) => $u['id'] == $id);
-
-            if ($index === false) {
-                return response()->json(['success' => false, 'message' => 'User tidak ditemukan!'], 404);
-            }
-
-            array_splice($users, $index, 1);
-            $this->db->saveUsers($users);
-
+            User::destroy($id);
             return response()->json(['success' => true, 'message' => 'User berhasil dihapus!']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Gagal menghapus user.'], 500);
         }
     }
 }

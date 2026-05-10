@@ -36,8 +36,8 @@
     <div class="mt-4 flex items-center justify-between border-t border-slate-200 pt-4">
         <span id="page-info" class="text-sm text-slate-500">Menampilkan data</span>
         <div class="flex space-x-2">
-            <button class="rounded border border-slate-300 px-3 py-1 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50">Prev</button>
-            <button class="rounded border border-slate-300 px-3 py-1 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50">Next</button>
+            <button id="prev-button" class="rounded border border-slate-300 px-3 py-1 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50">Prev</button>
+            <button id="next-button" class="rounded border border-slate-300 px-3 py-1 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50">Next</button>
         </div>
     </div>
 </div>

@@ -3,23 +3,18 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\JsonDataService;
+use App\Models\Barang;
+use App\Models\DetailTransaksi;
 
 class PrediksiStokController extends Controller
 {
-    protected $db;
-
-    public function __construct(JsonDataService $db)
-    {
-        $this->db = $db;
-    }
-
-    public function index() {
-        return view('prediksi_stok');
-    }
+    public function index() { return view('prediksi_stok'); }
 
     public function getBarang() {
-        return response()->json($this->db->getBarang());
+        return response()->json(Barang::all()->map(function($item) {
+            $item->id_barang = $item->id;
+            return $item;
+        }));
     }
 
     public function hitung(Request $request) 
@@ -27,40 +22,27 @@ class PrediksiStokController extends Controller
         $barangId = $request->barangId;
         $periode = (int) ($request->periode ?? 30); 
 
-        $masterBarang = collect($this->db->getBarang());
-        $barang = $masterBarang->firstWhere('id_barang', $barangId);
+        $barang = Barang::find($barangId);
+        if (!$barang) return response()->json(['error' => 'Barang tidak ditemukan'], 404);
 
-        if (!$barang) {
-            return response()->json(['error' => 'Barang tidak ditemukan'], 404);
-        }
-
-        $riwayatPenjualan = $this->db->getPenjualan();
         $tanggalMulai = now()->subDays($periode)->startOfDay();
-        $totalTerjual = 0;
 
-        foreach ($riwayatPenjualan as $transaksi) {
-            $tglTransaksi = \Carbon\Carbon::parse($transaksi['tanggal_penjualan']);
-            
-            if ($tglTransaksi->gte($tanggalMulai)) {
-                foreach ($transaksi['items'] as $item) {
-                    if ($item['id_barang'] == $barangId) {
-                        $totalTerjual += (int) $item['jumlah'];
-                    }
-                }
-            }
-        }
+        // Database langsung menghitung total terjual dalam periode tersebut
+        $totalTerjual = DetailTransaksi::where('barang_id', $barangId)
+            ->whereHas('transaksi', function($query) use ($tanggalMulai) {
+                $query->where('created_at', '>=', $tanggalMulai);
+            })->sum('kuantitas');
 
         $rataRataHarian = $totalTerjual / $periode;
-        $stokSekarang = (int) $barang['stok'];
-        
+        $stokSekarang = $barang->stok;
         $hariBertahan = ($rataRataHarian > 0) ? floor($stokSekarang / $rataRataHarian) : 999;
 
         return response()->json([
-            'nama_barang'      => $barang['nama_barang'],
+            'nama_barang'      => $barang->nama_barang,
             'stok_saat_ini'    => $stokSekarang,
             'rata_rata_harian' => round($rataRataHarian, 2),
             'hari_bertahan'    => (int) $hariBertahan,
-            'total_terjual'    => $totalTerjual,
+            'total_terjual'    => (int) $totalTerjual,
             'periode_analisis' => $periode
         ]);
     }

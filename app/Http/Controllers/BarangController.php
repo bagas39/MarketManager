@@ -3,45 +3,45 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\JsonDataService;
+use App\Models\Barang;
 
 class BarangController extends Controller
 {
-    protected $db;
-
-    public function __construct(JsonDataService $db)
-    {
-        $this->db = $db;
-    }
-
     public function getBarang()
     {
-        return response()->json($this->db->getBarang());
+        $barangs = Barang::select('id', 'kode_barang', 'nama_barang', 'harga_beli', 'harga_jual', 'stok')
+            ->orderBy('nama_barang', 'asc')
+            ->get()
+            ->map(function($item) {
+                $item->id_barang = $item->id; 
+                return $item;
+            });
+            
+        return response()->json($barangs);
     }
 
     public function listStok(Request $request)
     {
-        $offset = $request->query('offset', 0);
         $limit = $request->query('limit', 15);
         $searchNama = $request->query('search_nama');
 
-        $allData = $this->db->getBarang();
+        $query = Barang::query();
 
         if ($searchNama) {
-            $allData = array_filter($allData, function ($item) use ($searchNama) {
-                $matchNama = stripos(strtolower($item['nama_barang']), strtolower($searchNama)) !== false;
-                $matchId = stripos((string)$item['id_barang'], $searchNama) !== false;
-                return $matchNama || $matchId;
-            });
+            $query->where('nama_barang', 'like', "%{$searchNama}%")
+                  ->orWhere('kode_barang', 'like', "%{$searchNama}%");
         }
 
-        $allData = array_values($allData);
-        $totalAvailable = count($allData);
-        $pagedData = array_slice($allData, $offset, $limit);
+        $paginator = $query->orderBy('nama_barang', 'asc')->paginate($limit);
+
+        $items = $paginator->getCollection()->map(function($item) {
+            $item->id_barang = $item->id;
+            return $item;
+        });
 
         return response()->json([
-            'items' => $pagedData,
-            'totalAvailableItems' => $totalAvailable
+            'items' => $items,
+            'totalAvailableItems' => $paginator->total() 
         ]);
     }
 }

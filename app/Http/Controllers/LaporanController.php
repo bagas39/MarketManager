@@ -3,47 +3,38 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\JsonDataService;
+use App\Models\Transaksi;
+use App\Models\Pembelian;
 
 class LaporanController extends Controller
 {
-    protected $db;
-
-    public function __construct(JsonDataService $db)
-    {
-        $this->db = $db;
-    }
-
-    public function index()
-    {
-        return view('laporan_keuangan');
-    }
+    public function index() { return view('laporan_keuangan'); }
 
     public function getLaporan(Request $request)
     {
-        $penjualan = collect($this->db->getPenjualan());
-        $pembelian = collect($this->db->getPembelian());
+        $penjualan = Transaksi::select('no_transaksi', 'total_harga', 'created_at')->get();
+        $pembelian = Pembelian::select('no_pembelian', 'nama_supplier', 'total_biaya', 'created_at')->get();
 
         $totalMasuk = $penjualan->sum('total_harga');
-        $totalKeluar = $pembelian->sum('total_beli');
+        $totalKeluar = $pembelian->sum('total_biaya');
 
         $detail = [];
 
         foreach ($penjualan as $p) {
             $detail[] = [
-                'tanggal' => $p['tanggal_penjualan'],
-                'keterangan' => 'Penjualan Transaksi #' . $p['id_penjualan'],
+                'tanggal' => $p->created_at->format('Y-m-d H:i:s'),
+                'keterangan' => 'Penjualan Transaksi #' . $p->no_transaksi,
                 'tipe' => 'Masuk',
-                'jumlah' => $p['total_harga']
+                'jumlah' => $p->total_harga
             ];
         }
 
         foreach ($pembelian as $p) {
             $detail[] = [
-                'tanggal' => $p['tanggal_pembelian'],
-                'keterangan' => 'Pembelian dari ' . $p['supplier'],
+                'tanggal' => $p->created_at->format('Y-m-d H:i:s'),
+                'keterangan' => 'Pembelian dari ' . $p->nama_supplier,
                 'tipe' => 'Keluar',
-                'jumlah' => $p['total_beli']
+                'jumlah' => $p->total_biaya
             ];
         }
 

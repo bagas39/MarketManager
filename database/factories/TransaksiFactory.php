@@ -1,0 +1,28 @@
+<?php
+
+namespace Database\Factories;
+
+use App\Models\Transaksi;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+/**
+ * @extends Factory<Transaksi>
+ */
+class TransaksiFactory extends Factory
+{
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
+    public function definition(): array
+    {
+        return [
+            'no_transaksi' => 'TRX-' . $this->faker->unique()->numerify('#####'),
+            'user_id' => User::factory(), 
+            'total_harga' => 0, 
+            'tanggal' => $this->faker->dateTimeBetween('-1 month', 'now')->format('Y-m-d'),
+        ];
+    }
+}

@@ -1,4 +1,4 @@
-let currentOffset = 0;
+let currentPage = 1;
 const itemsLimit = 15;
 let totalAvailableItems = 0;
 let debounceTimer;
@@ -29,13 +29,13 @@ window.hideMessage = function() {
     messageModalEl.classList.remove('flex');
 }
 
-async function fetchStok(offset) {
+async function fetchStok(page) {
     loadingRow.style.display = 'table-row';
-    if (offset === 0) { tableBody.innerHTML = ''; }
+    if (page === 1) { tableBody.innerHTML = ''; }
     tableBody.appendChild(loadingRow);
     
     const searchNama = searchInput.value.trim();
-    const params = new URLSearchParams({ offset: offset, limit: itemsLimit });
+    const params = new URLSearchParams({ page: page, limit: itemsLimit });
     if (searchNama) { params.append('search_nama', searchNama); }
     
     try {
@@ -47,10 +47,10 @@ async function fetchStok(offset) {
         
         const data = await response.json();
         totalAvailableItems = data.totalAvailableItems;
-        currentOffset = offset;
+        currentPage = page;
         
         renderTable(data.items);
-        updatePaginationControls(offset, data.items.length);
+        updatePaginationControls(data.items.length);
     } catch (error) {
         console.error("Error fetching stok:", error);
         loadingRow.style.display = 'none';
@@ -75,7 +75,7 @@ function renderTable(items) {
         const stokClass = item.stok <= 0 ? 'text-red-600 font-semibold' : 'text-gray-700';
         
         row.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.id_barang}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.kode_barang || item.id_barang}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${item.nama_barang}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${item.kategori || 'N/A'}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${formatCurrency(item.harga_beli)}</td>
@@ -86,33 +86,30 @@ function renderTable(items) {
     });
 }
 
-function updatePaginationControls(offset, loadedCount) {
-    const startItem = totalAvailableItems > 0 ? offset + 1 : 0;
-    const endItem = offset + loadedCount;
+function updatePaginationControls(loadedCount) {
+    const startItem = totalAvailableItems > 0 ? ((currentPage - 1) * itemsLimit) + 1 : 0;
+    const endItem = startItem + loadedCount - 1;
     pageInfo.textContent = `Menampilkan ${startItem}-${endItem} dari ${totalAvailableItems}`;
-    prevButton.disabled = (offset === 0);
-    nextButton.disabled = (endItem >= totalAvailableItems);
+    prevButton.disabled = (currentPage === 1);
+    nextButton.disabled = (currentPage * itemsLimit >= totalAvailableItems);
 }
 
 document.addEventListener('DOMContentLoaded', () => { 
-    fetchStok(currentOffset); 
+    fetchStok(currentPage); 
 });
 
 prevButton.addEventListener('click', () => { 
-    const newOffset = currentOffset - itemsLimit; 
-    if (newOffset >= 0) { fetchStok(newOffset); } 
+    if (currentPage > 1) { fetchStok(currentPage - 1); } 
 });
 
 nextButton.addEventListener('click', () => { 
-    const newOffset = currentOffset + itemsLimit; 
-    if (newOffset < totalAvailableItems) { fetchStok(newOffset); } 
+    if (currentPage * itemsLimit < totalAvailableItems) { fetchStok(currentPage + 1); } 
 });
 
 searchInput.addEventListener('input', () => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => { 
-        currentOffset = 0; 
-        fetchStok(0); 
+        fetchStok(1); 
     }, 500);
 });
 

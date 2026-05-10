@@ -3,31 +3,42 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\JsonDataService;
+use App\Models\Transaksi;
+use App\Models\DetailTransaksi;
+use App\Models\Barang;
+use Illuminate\Support\Facades\DB;
 
 class TransaksiController extends Controller
 {
-    protected $db;
-
-    public function __construct(JsonDataService $db)
-    {
-        $this->db = $db;
-    }
 
     public function list(Request $request)
     {
         try {
             $searchId = $request->query('search_id');
+            $limit = $request->query('limit', 15); // Ambil parameter limit (default 15)
 
-            $mockSales = $this->db->getPenjualan();
+            $query = Transaksi::with('user');
 
             if ($searchId) {
-                $mockSales = array_filter($mockSales, fn($s) => stripos((string)($s['id_penjualan'] ?? ''), $searchId) !== false);
+                $query->where('no_transaksi', 'like', "%{$searchId}%");
             }
 
+            // Native Pagination
+            $paginator = $query->orderBy('created_at', 'desc')->paginate($limit);
+
+            $transactions = $paginator->getCollection()->map(function($trx) {
+                return [
+                    'id_penjualan' => $trx->no_transaksi,
+                    'id' => $trx->id,
+                    'nama_kasir' => $trx->user->name ?? 'Kasir',
+                    'tanggal_penjualan' => $trx->created_at->format('Y-m-d H:i:s'),
+                    'total_harga' => $trx->total_harga
+                ];
+            });
+
             return response()->json([
-                'transactions' => array_values($mockSales),
-                'totalAvailableTransactions' => count($mockSales)
+                'transactions' => $transactions,
+                'totalAvailableTransactions' => $paginator->total()
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -36,66 +47,79 @@ class TransaksiController extends Controller
 
     public function detail($id)
     {
-        $history = $this->db->getPenjualan();
-        $trx = collect($history)->firstWhere('id_penjualan', $id);
+        $trx = Transaksi::with(['user', 'detailTransaksis.barang'])->where('no_transaksi', $id)->first();
+        if (!$trx) return response()->json(['message' => 'Transaksi tidak ditemukan'], 404);
 
-        if (!$trx) {
-            return response()->json(['message' => 'Transaksi tidak ditemukan'], 404);
-        }
+        $items = $trx->detailTransaksis->map(function($detail) {
+            return [
+                'id_barang' => $detail->barang_id,
+                'nama_barang' => $detail->barang->nama_barang,
+                'harga_jual' => $detail->subtotal / $detail->kuantitas,
+                'jumlah' => $detail->kuantitas,
+                'subtotal' => $detail->subtotal
+            ];
+        });
 
         return response()->json([
             'header' => [
-                'id_penjualan' => $trx['id_penjualan'] ?? $id,
-                'nama_kasir' => $trx['nama_kasir'] ?? 'Kasir',
-                'tanggal_penjualan' => $trx['tanggal_penjualan'] ?? now()->toDateTimeString()
+                'id_penjualan' => $trx->no_transaksi,
+                'nama_kasir' => $trx->user->name ?? 'Kasir',
+                'tanggal_penjualan' => $trx->created_at->format('Y-m-d H:i:s')
             ],
-            'items' => $trx['items'] ?? [],
+            'items' => $items,
             'summary' => [
-                'total' => $trx['total_harga'] ?? 0
+                'total' => $trx->total_harga
             ]
         ]);
     }
 
     public function edit(Request $request, $id)
     {
-        $history = $this->db->getPenjualan();
-        $index = collect($history)->search(fn($trx) => ($trx['id_penjualan'] ?? null) == $id);
+        DB::beginTransaction();
+        try {
+            $trx = Transaksi::with('detailTransaksis')->where('no_transaksi', $id)->firstOrFail();
+            $items = $request->input('items', []);
+            if (empty($items)) throw new \Exception('Transaksi minimal harus memiliki 1 item.');
 
-        if ($index === false) {
-            return response()->json(['success' => false, 'message' => 'Transaksi tidak ditemukan'], 404);
+            // Kembalikan stok lama
+            foreach($trx->detailTransaksis as $detail) {
+                $barang = Barang::find($detail->barang_id);
+                if ($barang) {
+                    $barang->stok += $detail->kuantitas;
+                    $barang->save();
+                }
+            }
+            $trx->detailTransaksis()->delete();
+
+            $totalBaru = 0;
+            foreach ($items as $item) {
+                $idBarang = $item['id_barang'] ?? null;
+                $jumlah = (int)($item['jumlah'] ?? 1);
+
+                $barang = Barang::findOrFail($idBarang);
+                if ($barang->stok < $jumlah) throw new \Exception("Stok {$barang->nama_barang} tidak mencukupi!");
+
+                $barang->stok -= $jumlah;
+                $barang->save();
+
+                $subtotal = $barang->harga_jual * $jumlah;
+                $totalBaru += $subtotal;
+
+                DetailTransaksi::create([
+                    'transaksi_id' => $trx->id,
+                    'barang_id' => $barang->id,
+                    'kuantitas' => $jumlah,
+                    'subtotal' => $subtotal
+                ]);
+            }
+
+            $trx->update(['total_harga' => $totalBaru]);
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => "Transaksi berhasil diperbarui!"]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
         }
-
-        $items = $request->input('items', []);
-        if (empty($items)) {
-            return response()->json(['success' => false, 'message' => 'Transaksi minimal harus memiliki 1 item.'], 400);
-        }
-
-        $masterBarang = collect($this->db->getBarang());
-        $totalBaru = 0;
-
-        foreach ($items as &$item) {
-            $idBarang = $item['id_barang'] ?? null;
-            $barang = $idBarang ? $masterBarang->firstWhere('id_barang', $idBarang) : null;
-            
-            $hargaSatuan = $barang ? $barang['harga_jual'] : ($item['harga_jual'] ?? 3500); 
-            $namaBarang = $barang ? $barang['nama_barang'] : ($item['nama_barang'] ?? 'Item Unknown');
-
-            $item['id_barang'] = $idBarang;
-            $item['nama_barang'] = $namaBarang;
-            $item['harga_jual'] = $hargaSatuan;
-            $item['subtotal'] = $hargaSatuan * ($item['jumlah'] ?? 1);
-            
-            $totalBaru += $item['subtotal'];
-        }
-
-        $history[$index]['items'] = $items;
-        $history[$index]['total_harga'] = $totalBaru;
-
-        $this->db->savePenjualan($history);
-
-        return response()->json([
-            'success' => true, 
-            'message' => 'Transaksi #' . $id . ' berhasil diperbarui!'
-        ]);
     }
 }

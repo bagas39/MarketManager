@@ -2,9 +2,14 @@ const tbody = document.getElementById('sales-table-body');
 const searchInput = document.getElementById('search-input');
 const searchBtn = document.getElementById('search-btn');
 const pageInfo = document.getElementById('page-info');
+const prevButton = document.getElementById('prev-button');
+const nextButton = document.getElementById('next-button');
 
 let currentEditItems = [];
 let allProducts = [];
+let currentPage = 1;
+const itemsLimit = 15;
+let totalAvailableTransactions = 0;
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
 function formatIDR(num) {
@@ -25,22 +30,38 @@ async function fetchProducts() {
     }
 }
 
-async function loadSales() {
+function updatePaginationControls(loadedCount) {
+    if (!pageInfo) return;
+
+    const total = totalAvailableTransactions;
+    const startItem = total > 0 ? ((currentPage - 1) * itemsLimit) + 1 : 0;
+    const endItem = total > 0 ? startItem + loadedCount - 1 : 0;
+
+    pageInfo.textContent = `Menampilkan ${startItem}-${endItem} dari ${total} transaksi`;
+
+    if (prevButton) prevButton.disabled = currentPage <= 1;
+    if (nextButton) nextButton.disabled = currentPage * itemsLimit >= total;
+}
+
+async function loadSales(page = 1) {
     if (!tbody) return;
+    currentPage = page;
     tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-center text-slate-500">Mencari data transaksi...</td></tr>';
     
     const searchId = searchInput.value.trim();
-    let url = '/api/transaksi_penjualan';
-    if (searchId) url += `?search_id=${searchId}`;
+    const params = new URLSearchParams({ limit: itemsLimit.toString(), page: currentPage.toString() });
+    if (searchId) params.append('search_id', searchId);
+    const url = `/api/transaksi_penjualan?${params.toString()}`;
 
     try {
         const response = await fetch(url);
         const data = await response.json();
         tbody.innerHTML = '';
+        totalAvailableTransactions = data.totalAvailableTransactions || 0;
         
         if (data.transactions.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-center text-slate-500">Data transaksi tidak ditemukan.</td></tr>';
-            pageInfo.textContent = 'Menampilkan 0 data';
+            updatePaginationControls(0);
             return;
         }
 
@@ -56,15 +77,16 @@ async function loadSales() {
                     </td>
                     <td class="px-4 py-3 font-bold text-emerald-600 text-right">${formatIDR(sale.total_harga)}</td>
                     <td class="px-4 py-3 text-center space-x-1">
-                        <button onclick="viewDetail(${sale.id_penjualan})" class="inline-flex items-center justify-center rounded-md bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 transition hover:bg-blue-100">Detail</button>
-                        <button onclick="openEditModal(${sale.id_penjualan})" class="inline-flex items-center justify-center rounded-md bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-600 transition hover:bg-amber-100">Edit</button>
+                        <button onclick="viewDetail('${String(sale.id_penjualan).replace(/'/g, "\\'")}')" class="inline-flex items-center justify-center rounded-md bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 transition hover:bg-blue-100">Detail</button>
+                        <button onclick="openEditModal('${String(sale.id_penjualan).replace(/'/g, "\\'")}')" class="inline-flex items-center justify-center rounded-md bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-600 transition hover:bg-amber-100">Edit</button>
                     </td>
                 </tr>
             `;
         });
-        pageInfo.textContent = `Menampilkan ${data.transactions.length} dari ${data.totalAvailableTransactions} transaksi`;
+        updatePaginationControls(data.transactions.length);
     } catch (error) {
         tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-center text-red-500">Gagal terhubung ke server.</td></tr>';
+        if (pageInfo) pageInfo.textContent = 'Gagal memuat data transaksi';
     }
 }
 
@@ -234,10 +256,16 @@ window.saveEditTransaction = async function() {
     }
 };
 
-searchBtn?.addEventListener('click', loadSales);
-searchInput?.addEventListener('keyup', (e) => { if (e.key === 'Enter') loadSales(); });
+searchBtn?.addEventListener('click', () => loadSales(1));
+searchInput?.addEventListener('keyup', (e) => { if (e.key === 'Enter') loadSales(1); });
+prevButton?.addEventListener('click', () => {
+    if (currentPage > 1) loadSales(currentPage - 1);
+});
+nextButton?.addEventListener('click', () => {
+    if (currentPage * itemsLimit < totalAvailableTransactions) loadSales(currentPage + 1);
+});
 
 if (tbody) {
     fetchProducts();
-    loadSales();
+    loadSales(1);
 }

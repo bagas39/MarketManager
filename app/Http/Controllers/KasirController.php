@@ -3,98 +3,81 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\JsonDataService;
+use App\Models\Barang;
+use App\Models\Transaksi;
+use App\Models\DetailTransaksi;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class KasirController extends Controller
 {
-    protected $db;
-
-    public function __construct(JsonDataService $db)
-    {
-        $this->db = $db;
-    }
-
     public function index() { return view('kasir'); }
 
     public function getBarang() {
-        return response()->json($this->db->getBarang());
+        return response()->json(Barang::all()->map(function($item) {
+            $item->id_barang = $item->id;
+            return $item;
+        }));
     }
 
     public function storeTransaksi(Request $request)
     {
+        // 1. VALIDASI 
+        $validated = $request->validate([
+            'items' => 'required|array|min:1',
+            'items.*.id_barang' => 'required|integer|exists:barangs,id', // Harus ada di tabel barangs
+            'items.*.jumlah' => 'required|integer|min:1' // Tidak minus
+        ], [
+            'items.*.id_barang.exists' => 'Salah satu barang yang discan tidak valid/tidak ditemukan di database.',
+            'items.*.jumlah.min' => 'Jumlah barang minimal 1.'
+        ]);
+
+        DB::beginTransaction();
         try {
-            $items = $request->input('items', []); 
-            
-            if (empty($items)) {
-                return response()->json(['success' => false, 'message' => 'Item tidak boleh kosong!'], 400);
-            }
-
-            $masterBarang = $this->db->getBarang();
-            $enrichedItems = [];
             $total = 0;
+            $noTransaksi = 'TRX-' . rand(10000, 99999);
 
-            foreach($items as $item) {
-                $idBarang = $item['id_barang'] ?? $item['idBarang'] ?? null;
-                $jumlah = isset($item['jumlah']) ? (int)$item['jumlah'] : 1;
+            $transaksi = Transaksi::create([
+                'no_transaksi' => $noTransaksi,
+                'user_id' => Auth::id() ?? 1,
+                'total_harga' => 0,
+                'tanggal' => now()->format('Y-m-d')
+            ]);
 
-                if (!$idBarang) continue;
-
-                $barangDitemukan = false;
-
-                foreach ($masterBarang as $idx => &$mb) {
-                    if ($mb['id_barang'] == $idBarang) {
-                        $hargaJual = $mb['harga_jual'];
-                        $namaBarang = $mb['nama_barang'];
-                        
-                        if ($mb['stok'] < $jumlah) {
-                             return response()->json(['success' => false, 'message' => "Stok $namaBarang tidak mencukupi!"], 400);
-                        }
-
-                        $mb['stok'] -= $jumlah; 
-                        $barangDitemukan = true;
-                        break;
-                    }
+            foreach($validated['items'] as $item) {
+                // Lock for update mencegah error jika ada 2 kasir check-out barang sama bersamaan
+                $barang = Barang::where('id', $item['id_barang'])->lockForUpdate()->first();
+                
+                if ($barang->stok < $item['jumlah']) {
+                    throw new \Exception("Stok {$barang->nama_barang} tidak mencukupi! (Sisa: {$barang->stok})");
                 }
 
-                if (!$barangDitemukan) {
-                    return response()->json(['success' => false, 'message' => "Barang dengan ID $idBarang tidak ditemukan di database!"], 404);
-                }
+                $barang->stok -= $item['jumlah']; 
+                $barang->save();
 
-                $subtotal = $hargaJual * $jumlah;
-
-                $enrichedItems[] = [
-                    'id_barang' => $idBarang,
-                    'nama_barang' => $namaBarang,
-                    'harga_jual' => $hargaJual,
-                    'jumlah' => $jumlah,
-                    'subtotal' => $subtotal
-                ];
-
+                $subtotal = $barang->harga_jual * $item['jumlah'];
                 $total += $subtotal;
+
+                DetailTransaksi::create([
+                    'transaksi_id' => $transaksi->id,
+                    'barang_id' => $barang->id,
+                    'kuantitas' => $item['jumlah'],
+                    'subtotal' => $subtotal
+                ]);
             }
 
-            $this->db->saveBarang($masterBarang);
-
-            $newTransaction = [
-                'id_penjualan' => rand(5000, 9999),
-                'tanggal_penjualan' => now()->toDateTimeString(),
-                'nama_kasir' => session('user_name', 'Kasir Umum'),
-                'total_harga' => $total,
-                'items' => $enrichedItems 
-            ];
-
-            $history = $this->db->getPenjualan();
-            array_unshift($history, $newTransaction); 
-            $this->db->savePenjualan($history);
+            $transaksi->update(['total_harga' => $total]);
+            DB::commit();
 
             return response()->json([
                 'success' => true,
-                'id_penjualan' => $newTransaction['id_penjualan'],
+                'id_penjualan' => $transaksi->no_transaksi,
                 'message' => 'Transaksi berhasil & stok gudang telah dikurangi!'
             ]);
 
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error Server: ' . $e->getMessage()], 500);
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }
 }
