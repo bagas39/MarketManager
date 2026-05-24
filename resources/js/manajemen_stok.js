@@ -13,6 +13,16 @@ const messageModalEl = document.getElementById('message-modal');
 const messageTitleEl = document.getElementById('message-title');
 const messageBodyEl = document.getElementById('message-body');
 
+const escapeHtml = window.escapeHtml || function(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/`/g, '&#96;');
+};
+
 function formatCurrency(value) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
 }
@@ -54,8 +64,8 @@ async function fetchStok(page) {
     } catch (error) {
         console.error("Error fetching stok:", error);
         loadingRow.style.display = 'none';
-        tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-red-600">Gagal memuat data: ${error.message}</td></tr>`;
-        showMessage('Error', `Gagal memuat data stok. ${error.message}`);
+        tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-red-600">Gagal memuat data: ${escapeHtml(error.message)}</td></tr>`;
+        showMessage('Error', `Gagal memuat data stok. ${escapeHtml(error.message)}`);
     }
 }
 
@@ -75,12 +85,12 @@ function renderTable(items) {
         const stokClass = item.stok <= 0 ? 'text-red-600 font-semibold' : 'text-gray-700';
         
         row.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.kode_barang || item.id_barang}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${item.nama_barang}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${item.kategori || 'N/A'}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${formatCurrency(item.harga_beli)}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${formatCurrency(item.harga_jual)}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm ${stokClass}">${item.stok}</td>
+            <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium text-gray-900 w-36">${escapeHtml(item.kode_barang || item.id_barang)}</td>
+            <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-700 max-w-[240px] truncate">${escapeHtml(item.nama_barang)}</td>
+            <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-700 hidden force-md">${escapeHtml(item.kategori || 'N/A')}</td>
+            <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-700 text-right">${formatCurrency(item.harga_beli)}</td>
+            <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-700 text-right hidden force-md">${formatCurrency(item.harga_jual)}</td>
+            <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm ${stokClass} text-right">${escapeHtml(item.stok)}</td>
         `;
         tableBody.appendChild(row);
     });

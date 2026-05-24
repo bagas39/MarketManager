@@ -54,22 +54,22 @@ class DatabaseSeeder extends Seeder
 
         // 3. Simulasi Transaksi Penjualan
         Transaksi::factory(5)->create(['user_id' => $kasir->id])->each(function ($trx) use ($barangs) {
-            $totalHarga = 0;
+            $subtotal = 0;
             $items = $barangs->random(rand(1, 3)); 
             
             foreach ($items as $item) {
                 $qty = rand(1, 5);
-                $subtotal = $item->harga_jual * $qty;
-                $totalHarga += $subtotal;
+                $itemSubtotal = $item->harga_jual * $qty;
+                $subtotal += $itemSubtotal;
 
                 DetailTransaksi::create([
                     'transaksi_id' => $trx->id,
                     'barang_id' => $item->id,
                     'kuantitas' => $qty,
-                    'subtotal' => $subtotal
+                    'subtotal' => $itemSubtotal
                 ]);
             }
-            $trx->update(['total_harga' => $totalHarga]);
+            $trx->update(['total_harga' => round($subtotal * 1.11, 2)]);
         });
 
         // 4. Simulasi Pembelian Masuk
@@ -79,18 +79,18 @@ class DatabaseSeeder extends Seeder
 
             foreach ($items as $item) {
                 $qty = rand(10, 50);
-                $subtotal = $item->harga_beli * $qty;
-                $totalBiaya += $subtotal;
+                $itemSubtotal = $item->harga_beli * $qty;
+                $totalBiaya += $itemSubtotal;
 
                 DetailPembelian::create([
                     'pembelian_id' => $po->id,
                     'barang_id' => $item->id,
                     'harga_beli' => $item->harga_beli,
                     'kuantitas' => $qty,
-                    'subtotal' => $subtotal
+                    'subtotal' => $itemSubtotal
                 ]);
             }
-            $po->update(['total_biaya' => $totalBiaya]);
+            $po->update(['total_biaya' => round($totalBiaya, 2)]);
         });
 
         // 5. Simulasi Riwayat Stok Opname
@@ -103,7 +103,8 @@ class DatabaseSeeder extends Seeder
                 'user_id' => $gudang->id,
                 'stok_sistem' => $stokSistem,
                 'stok_fisik' => $stokFisik,
-                'selisih' => $stokFisik - $stokSistem
+                'selisih' => $stokFisik - $stokSistem,
+                'keterangan' => 'Seeder Dummy'
             ]);
         }
     }

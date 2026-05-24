@@ -2,6 +2,16 @@ let items = [];
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 let allProducts = [];
 
+const escapeHtml = window.escapeHtml || function(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/`/g, '&#96;');
+};
+
 function formatIDR(num) {
     return new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', minimumFractionDigits:0}).format(num);
 }
@@ -40,41 +50,49 @@ async function fetchProducts() {
 document.getElementById('add-item-form')?.addEventListener('submit', function(e) {
     e.preventDefault();
     const nameOrSku = document.getElementById('item-name').value.trim();
+    const kategori = document.getElementById('item-category').value.trim();
     const price = parseFloat(document.getElementById('item-price').value);
     const qty = parseInt(document.getElementById('item-qty').value);
 
-    if (!nameOrSku || isNaN(price) || isNaN(qty) || qty <= 0) {
-        modal("Input Tidak Valid", "Pastikan semua kolom diisi dengan benar.");
+    if (!nameOrSku) {
+        modal("Validasi Gagal", "Nama Barang / SKU wajib diisi");
+        return;
+    }
+
+    if (!kategori) {
+        modal("Validasi Gagal", "Kategori wajib diisi");
+        return;
+    }
+
+    if (!Number.isFinite(price) || price <= 0) {
+        modal("Validasi Gagal", "Harga beli harus lebih dari 0");
+        return;
+    }
+
+    if (!Number.isInteger(qty) || qty <= 0) {
+        modal("Validasi Gagal", "Qty harus bilangan bulat lebih dari 0");
         return;
     }
 
     let product = allProducts.find(p => 
-        p.id_barang.toString() === nameOrSku || 
-        p.nama_barang.toLowerCase() === nameOrSku.toLowerCase()
+        (p.kode_barang && p.kode_barang.toString() === nameOrSku) || 
+        (p.nama_barang && p.nama_barang.toLowerCase() === nameOrSku.toLowerCase())
     );
 
-    let id, name;
+    let id = product ? product.id_barang : null;
+    let name = product ? product.nama_barang : nameOrSku;
 
-    if (product) {
-        id = product.id_barang;
-        name = product.nama_barang;
-    } else {
-        id = Math.floor(Math.random() * 9000) + 2000; 
-        name = nameOrSku;
-    }
-
-    const exist = items.find(i => i.id_barang === id || i.namaBarang.toLowerCase() === name.toLowerCase());
+    const exist = items.find(i => i.id_barang === id && id !== null);
     
     if(exist) {
         exist.jumlah += qty;
+        exist.kategori = kategori;
         exist.hargaBeli = price;
     } else {
-        items.push({ id_barang: id, namaBarang: name, hargaBeli: price, jumlah: qty });
+        items.push({ id_barang: id, namaBarang: name, kategori, hargaBeli: price, jumlah: qty });
     }
     
     this.reset();
-    document.getElementById('item-qty').value = '1';
-    document.getElementById('item-name').focus();
     renderCart();
 });
 
@@ -94,7 +112,7 @@ function renderCart() {
     let total = 0;
     
     if(items.length === 0) {
-        body.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-400 italic">Belum ada item ditambahkan</td></tr>';
+        body.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400 italic">Belum ada item ditambahkan</td></tr>';
         btnSubmit.disabled = true;
         displayTotal.textContent = formatIDR(0);
         return;
@@ -107,12 +125,13 @@ function renderCart() {
         body.innerHTML += `
             <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                 <td class="px-4 py-3">
-                    <p class="font-medium text-slate-800">${item.namaBarang}</p>
-                    <p class="text-xs text-slate-500">ID: ${item.id_barang}</p>
+                    <p class="font-medium text-slate-800">${escapeHtml(item.namaBarang)}</p>
+                    <p class="text-xs text-slate-500">ID: ${item.id_barang ? escapeHtml(item.id_barang) : '<span class="text-emerald-500 font-semibold italic">Barang Baru</span>'}</p>
                 </td>
+                <td class="px-4 py-3 text-slate-600">${escapeHtml(item.kategori)}</td>
                 <td class="px-4 py-3 text-right text-slate-600">${formatIDR(item.hargaBeli)}</td>
                 <td class="px-4 py-3 text-center">
-                    <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-bold">${item.jumlah}</span>
+                    <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-bold">${escapeHtml(item.jumlah)}</span>
                 </td>
                 <td class="px-4 py-3 text-right font-bold text-emerald-600">${formatIDR(sub)}</td>
                 <td class="px-4 py-3 text-center">
@@ -127,9 +146,8 @@ function renderCart() {
 
 document.getElementById('submit-purchase-btn')?.addEventListener('click', async function() {
     const sup = document.getElementById('supplier-input').value;
-    const gudang = document.getElementById('gudang-input').value;
 
-    if(!sup || !gudang) return modal("Validasi Gagal", "Supplier & Gudang wajib diisi");
+    if(!sup) return modal("Validasi Gagal", "Supplier wajib diisi");
 
     this.disabled = true;
     this.innerHTML = "Menyimpan...";
@@ -142,7 +160,7 @@ document.getElementById('submit-purchase-btn')?.addEventListener('click', async 
                 'Accept': 'application/json',
                 'X-CSRF-TOKEN': csrfToken
             },
-            body: JSON.stringify({ supplier: sup, idGudang: parseInt(gudang), items: items })
+            body: JSON.stringify({ supplier: sup, items: items })
         });
         
         const json = await res.json();
@@ -178,15 +196,15 @@ async function loadHistory() {
         
         if(data.purchases && data.purchases.length > 0) {
             data.purchases.forEach(p => {
-                const date = new Date(p.tanggal_pembelian).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'});
+                const date = p.tanggal_pembelian ? p.tanggal_pembelian.split(' ')[0] : '-';
                 container.innerHTML += `
                     <div class="bg-white border border-slate-200 p-4 rounded-lg hover:border-emerald-500 hover:shadow-md transition-all cursor-default group mb-3">
                         <div class="flex justify-between items-start mb-2">
-                            <span class="font-bold text-slate-800 text-sm group-hover:text-emerald-600 transition-colors">#${p.id_pembelian}</span>
-                            <span class="text-[10px] uppercase font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">${date}</span>
+                            <span class="font-bold text-slate-800 text-sm group-hover:text-emerald-600 transition-colors">#${escapeHtml(p.id_pembelian)}</span>
+                            <span class="text-[10px] uppercase font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">${escapeHtml(date)}</span>
                         </div>
                         <div class="text-xs text-slate-500 mb-1">Supplier</div>
-                        <div class="text-sm font-semibold text-slate-700 mb-2 truncate">${p.supplier}</div>
+                        <div class="text-sm font-semibold text-slate-700 mb-2 truncate">${escapeHtml(p.supplier)}</div>
                         <div class="border-t border-slate-100 pt-2 flex justify-between items-center">
                             <span class="text-xs text-slate-400">Total</span>
                             <span class="text-sm font-bold text-emerald-600">${formatIDR(p.total_beli)}</span>

@@ -67,6 +67,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:Gudang,Supervisor')->group(function () {
         Route::get('/stok_opname', [StokOpnameController::class, 'index']);
         Route::get('/api/stok_opname/data', [StokOpnameController::class, 'data']);
+        Route::get('/api/stok_opname/history', [StokOpnameController::class, 'history']);
         Route::post('/api/stok_opname/simpan', [StokOpnameController::class, 'simpan']);
     });
 
@@ -90,5 +91,6 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:Owner')->group(function () {
         Route::get('/laporan_keuangan', [LaporanController::class, 'index']);
         Route::get('/api/laporan_keuangan', [LaporanController::class, 'getLaporan']);
+        Route::get('/laporan_keuangan/export-pdf', [LaporanController::class, 'exportPdf']);
     });
 });

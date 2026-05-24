@@ -1,22 +1,41 @@
-let barangData = []; 
+let barangData = [];
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+const escapeHtml = window.escapeHtml || function(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/`/g, '&#96;');
+};
+
 async function fetchBarangPrediksi() {
     const selectBarang = document.getElementById("barangId");
     if (!selectBarang) return;
 
     try {
         const response = await fetch('/api/prediksi_stok/barang');
-        
+
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
         const data = await response.json();
-        
-        barangData = data || []; 
+
+        barangData = data || [];
         renderDropdownBarang();
     } catch (error) {
         console.error("Gagal mengambil data barang:", error);
         selectBarang.innerHTML = `<option value="">Gagal memuat produk</option>`;
+        updateTombolHitung();
     }
+}
+
+function updateTombolHitung() {
+    const selectBarang = document.getElementById("barangId");
+    const btnHitung = document.getElementById("btn-hitung");
+    if (!selectBarang || !btnHitung) return;
+
+    btnHitung.disabled = !selectBarang.value;
 }
 
 function renderDropdownBarang() {
@@ -27,6 +46,7 @@ function renderDropdownBarang() {
 
     if (barangData.length === 0) {
         selectBarang.innerHTML = '<option value="">Data barang kosong</option>';
+        updateTombolHitung();
         return;
     }
 
@@ -36,19 +56,16 @@ function renderDropdownBarang() {
         option.textContent = item.nama_barang;
         selectBarang.appendChild(option);
     });
+
+    updateTombolHitung();
 }
 
 window.hitungPrediksi = async function() {
     const barangId = document.getElementById("barangId").value;
-    const periode = document.getElementById("periode").value;
+    const periode = 30;
     const hasilBox = document.getElementById("hasilBox");
 
     if (!barangId) {
-        alert("Silakan pilih produk terlebih dahulu!");
-        return;
-    }
-    if (!periode || periode < 1) {
-        alert("Masukkan jumlah hari analisis yang valid (minimal 1 hari)!");
         return;
     }
 
@@ -67,8 +84,7 @@ window.hitungPrediksi = async function() {
                 'X-CSRF-TOKEN': csrfToken
             },
             body: JSON.stringify({
-                barangId: barangId,
-                periode: parseInt(periode)
+                barangId: barangId
             })
         });
 
@@ -76,50 +92,51 @@ window.hitungPrediksi = async function() {
 
         const data = await response.json();
 
-        renderHasilAnalisis(data, periode);
+        renderHasilAnalisis(data);
 
     } catch (error) {
         console.error("Error Prediksi:", error);
         hasilBox.innerHTML = `<p class="text-red-500 text-center">Terjadi kesalahan saat menghitung prediksi.</p>`;
     }
-}
+};
 
-function renderHasilAnalisis(data, periode) {
+function renderHasilAnalisis(data) {
     const hasilBox = document.getElementById("hasilBox");
     hasilBox.innerHTML = "";
 
     const stokSekarang = parseInt(data.stok_saat_ini);
     const totalTerjual = parseInt(data.total_terjual);
     const sisaHari = data.hari_bertahan;
-    
+    const periode = data.periode_analisis || 30;
+
     let statusText = "";
     let statusColorClass = "";
-    let mainContent = ""; 
-    let footerContent = ""; 
+    let mainContent = "";
+    let footerContent = "";
 
-    if (stokSekarang > 0 && totalTerjual === 0) {
-        statusText = "DATA TERBATAS";
-        statusColorClass = "bg-slate-500 text-white";
-        
+    if (data.can_predict === false || totalTerjual === 0) {
+        statusText = "DATA TIDAK CUKUP";
+        statusColorClass = "bg-red-600 text-white";
+
         mainContent = `
             <div class="flex flex-col items-center justify-center py-10">
                 <div class="p-6 bg-red-50 border border-red-100 rounded-2xl w-full">
-                    <p class="text-red-600 text-xs font-bold uppercase tracking-tight text-center">
-                        ⚠ Produk ini tidak memiliki data penjualan dalam ${periode} hari terakhir
+                    <p class="text-red-600 text-sm font-bold tracking-tight text-center">
+                        ${escapeHtml(data.message || 'Data riwayat penjualan tidak cukup untuk diprediksi')}
                     </p>
                     <p class="text-red-400 text-[10px] mt-2 font-medium text-center uppercase tracking-wide">
-                        Gunakan periode yang lebih panjang atau pastikan transaksi sudah tercatat.
+                        Prediksi hanya menggunakan riwayat penjualan 30 hari terakhir.
                     </p>
                 </div>
             </div>
         `;
-        
-        footerContent = ""; 
+
+        footerContent = "";
     }
     else {
         const isStokHabis = stokSekarang === 0;
         const isKritis = sisaHari < 7 && sisaHari > 0;
-        
+
         if (isStokHabis) {
             statusText = "STOK HABIS";
             statusColorClass = "bg-red-600 text-white";
@@ -142,7 +159,7 @@ function renderHasilAnalisis(data, periode) {
         footerContent = `
             <div class="mt-6 pt-6 border-t border-slate-200 w-full text-center">
                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    ℹ Prediksi dihitung dari total ${totalTerjual} unit terjual
+                    Prediksi dihitung dari total ${totalTerjual} unit terjual
                 </span>
             </div>
         `;
@@ -153,8 +170,8 @@ function renderHasilAnalisis(data, periode) {
             <div class="flex justify-between items-start w-full">
                 <div class="space-y-1">
                     <p class="text-lg font-black uppercase tracking-tight text-slate-900">HASIL ANALISIS</p>
-                    <h3 class="text-2xl font-bold text-slate-500">${data.nama_barang}</h3>
-                    <p class="text-sm text-slate-400 font-medium">Tren <span class="text-slate-600">${periode} hari</span> terakhir</p>
+                    <h3 class="text-2xl font-bold text-slate-500">${escapeHtml(data.nama_barang)}</h3>
+                    <p class="text-sm text-slate-400 font-medium">Tren <span class="text-slate-600">${escapeHtml(periode)} hari</span> terakhir</p>
                 </div>
                 <span class="px-4 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${statusColorClass} shadow-sm">
                     ${statusText}
@@ -188,4 +205,8 @@ function renderHasilAnalisis(data, periode) {
     hasilBox.innerHTML = content;
 }
 
-document.addEventListener('DOMContentLoaded', fetchBarangPrediksi);
+document.addEventListener('DOMContentLoaded', () => {
+    fetchBarangPrediksi();
+    document.getElementById("barangId")?.addEventListener("change", updateTombolHitung);
+    updateTombolHitung();
+});

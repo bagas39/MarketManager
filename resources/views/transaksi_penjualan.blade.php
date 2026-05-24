@@ -8,7 +8,7 @@
     
     <div class="mb-5 flex flex-col gap-3 md:flex-row md:items-center">
         <input type="date" id="start-date" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 md:w-auto">
-        <span class="hidden text-slate-500 md:block">-</span>
+        <span class="hidden text-slate-500 md:block force-md-block">-</span>
         <input type="date" id="end-date" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 md:w-auto">
         <input type="text" id="search-input" placeholder="Cari ID Transaksi..." class="w-full flex-1 rounded-lg border border-slate-300 px-3 py-2 text-slate-700 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100">
         <button id="search-btn" class="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-700">Cari</button>
@@ -73,7 +73,7 @@
             <div class="flex gap-2 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-200 items-end">
                 <div class="flex-1">
                     <label class="text-xs font-semibold text-slate-500 mb-1 block">ID Barang / SKU</label>
-                    <input type="number" id="new-item-id" placeholder="Contoh: 1001" class="w-full px-3 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:border-emerald-500">
+                    <input type="text" id="new-item-id" placeholder="Contoh: BRG-20260524-0004" class="w-full px-3 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:border-emerald-500">
                 </div>
                 <div class="w-20">
                     <label class="text-xs font-semibold text-slate-500 mb-1 block">Qty</label>

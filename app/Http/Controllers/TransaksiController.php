@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Transaksi;
 use App\Models\DetailTransaksi;
@@ -15,6 +16,8 @@ class TransaksiController extends Controller
     {
         try {
             $searchId = $request->query('search_id');
+            $startDate = $request->query('start_date');
+            $endDate = $request->query('end_date');
             $limit = $request->query('limit', 15); // Ambil parameter limit (default 15)
 
             $query = Transaksi::with('user');
@@ -23,15 +26,23 @@ class TransaksiController extends Controller
                 $query->where('no_transaksi', 'like', "%{$searchId}%");
             }
 
+            if ($startDate) {
+                $query->whereDate('tanggal', '>=', $startDate);
+            }
+
+            if ($endDate) {
+                $query->whereDate('tanggal', '<=', $endDate);
+            }
+
             // Native Pagination
-            $paginator = $query->orderBy('created_at', 'desc')->paginate($limit);
+            $paginator = $query->orderBy('tanggal', 'desc')->orderBy('created_at', 'desc')->paginate($limit);
 
             $transactions = $paginator->getCollection()->map(function($trx) {
                 return [
                     'id_penjualan' => $trx->no_transaksi,
                     'id' => $trx->id,
                     'nama_kasir' => $trx->user->name ?? 'Kasir',
-                    'tanggal_penjualan' => $trx->created_at->format('Y-m-d H:i:s'),
+                    'tanggal_penjualan' => $trx->tanggal ? Carbon::parse($trx->tanggal)->format('Y-m-d') : $trx->created_at->format('Y-m-d'),
                     'total_harga' => $trx->total_harga
                 ];
             });
@@ -64,7 +75,7 @@ class TransaksiController extends Controller
             'header' => [
                 'id_penjualan' => $trx->no_transaksi,
                 'nama_kasir' => $trx->user->name ?? 'Kasir',
-                'tanggal_penjualan' => $trx->created_at->format('Y-m-d H:i:s')
+                'tanggal_penjualan' => $trx->tanggal ? Carbon::parse($trx->tanggal)->format('Y-m-d') : $trx->created_at->format('Y-m-d')
             ],
             'items' => $items,
             'summary' => [
@@ -91,7 +102,7 @@ class TransaksiController extends Controller
             }
             $trx->detailTransaksis()->delete();
 
-            $totalBaru = 0;
+            $subtotalBaru = 0;
             foreach ($items as $item) {
                 $idBarang = $item['id_barang'] ?? null;
                 $jumlah = (int)($item['jumlah'] ?? 1);
@@ -103,7 +114,7 @@ class TransaksiController extends Controller
                 $barang->save();
 
                 $subtotal = $barang->harga_jual * $jumlah;
-                $totalBaru += $subtotal;
+                $subtotalBaru += $subtotal;
 
                 DetailTransaksi::create([
                     'transaksi_id' => $trx->id,
@@ -113,7 +124,7 @@ class TransaksiController extends Controller
                 ]);
             }
 
-            $trx->update(['total_harga' => $totalBaru]);
+            $trx->update(['total_harga' => round($subtotalBaru * 1.11, 2)]);
             DB::commit();
 
             return response()->json(['success' => true, 'message' => "Transaksi berhasil diperbarui!"]);

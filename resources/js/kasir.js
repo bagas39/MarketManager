@@ -21,6 +21,16 @@ const messageBodyEl = document.getElementById('message-body');
 
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
+const escapeHtml = window.escapeHtml || function(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/`/g, '&#96;');
+};
+
 function formatCurrency(value) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
 }
@@ -69,7 +79,7 @@ function handleAddItem(event) {
     }
 
     const product = allProducts.find(p => 
-        (p.id_barang || p.idBarang).toString() === sku || 
+        (p.kode_barang || p.id_barang).toString() === sku || 
         (p.nama_barang || p.namaBarang).toLowerCase() === sku.toLowerCase()
     );
 
@@ -125,12 +135,12 @@ function renderCart() {
             row.className = 'hover:bg-slate-50 transition-colors border-b border-slate-100';
             row.innerHTML = `
                 <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-semibold text-slate-800">${item.nama_barang}</div>
-                    <div class="text-xs text-slate-500">ID: ${item.id_barang}</div>
+                    <div class="text-sm font-semibold text-slate-800">${escapeHtml(item.nama_barang)}</div>
+                    <div class="text-xs text-slate-500">ID: ${escapeHtml(item.id_barang)}</div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">${formatCurrency(item.harga_jual)}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                    <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-bold">${item.jumlah}</span>
+                    <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-bold">${escapeHtml(item.jumlah)}</span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-emerald-600">${formatCurrency(item.jumlah * item.harga_jual)}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

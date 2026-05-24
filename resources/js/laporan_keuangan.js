@@ -28,21 +28,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const tableBody = document.getElementById('laporan-table-body');
             if (data.detail.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="4" class="px-6 py-10 text-center text-gray-400">Tidak ada data untuk periode ini</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="4" class="px-4 py-10 text-center text-gray-400 sm:px-6">Tidak ada data untuk periode ini</td></tr>';
                 return;
             }
 
+            const escapeHtml = window.escapeHtml || function(value) {
+                return String(value ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/\"/g, '&quot;')
+                    .replace(/'/g, '&#39;')
+                    .replace(/`/g, '&#96;');
+            };
+
             tableBody.innerHTML = data.detail.map(item => `
                 <tr class="hover:bg-gray-50 transition">
-                    <td class="px-6 py-4 text-sm text-gray-600">${item.tanggal}</td>
-                    <td class="px-6 py-4 text-sm font-semibold text-gray-800">${item.keterangan}</td>
-                    <td class="px-6 py-4 text-center">
+                    <td class="px-4 py-3 text-sm text-gray-600 sm:px-6 sm:py-4">${escapeHtml(item.tanggal)}</td>
+                    <td class="px-4 py-3 text-sm font-semibold text-gray-800 sm:px-6 sm:py-4 break-words">${escapeHtml(item.keterangan)}</td>
+                    <td class="px-4 py-3 text-center sm:px-6 sm:py-4">
                         <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${item.tipe === 'Masuk' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">
-                            ${item.tipe}
+                            ${escapeHtml(item.tipe)}
                         </span>
                     </td>
-                    <td class="px-6 py-4 text-right font-bold ${item.tipe === 'Masuk' ? 'text-emerald-600' : 'text-red-600'}">
-                        Rp ${item.jumlah.toLocaleString()}
+                    <td class="px-4 py-3 text-right font-bold sm:px-6 sm:py-4 ${item.tipe === 'Masuk' ? 'text-emerald-600' : 'text-red-600'}">
+                        Rp ${String(item.jumlah).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                     </td>
                 </tr>
             `).join('');
@@ -51,4 +61,16 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error:', error);
         }
     }
+
+    document.getElementById('export-pdf-btn').addEventListener('click', function() {
+        const start = document.getElementById('start-date').value;
+        const end = document.getElementById('end-date').value;
+        
+        let url = '/laporan_keuangan/export-pdf';
+        if (start && end) {
+            url += `?start_date=${start}&end_date=${end}`;
+        }
+        
+        window.open(url, '_blank');
+    });
 });

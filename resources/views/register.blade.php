@@ -46,8 +46,6 @@
                 <select name="role" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none transition bg-white">
                     <option value="Kasir" {{ old('role') == 'Kasir' ? 'selected' : '' }}>Kasir</option>
                     <option value="Gudang" {{ old('role') == 'Gudang' ? 'selected' : '' }}>Gudang</option>
-                    <option value="Supervisor" {{ old('role') == 'Supervisor' ? 'selected' : '' }}>Supervisor</option>
-                    <option value="Owner" {{ old('role') == 'Owner' ? 'selected' : '' }}>Owner</option>
                 </select>
             </div>
 

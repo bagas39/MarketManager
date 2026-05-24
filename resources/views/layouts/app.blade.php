@@ -8,6 +8,17 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>body { font-family: 'Inter', sans-serif; }</style>
+    <style>
+        .force-md { display: none; }
+        body.force-md-active .force-md { display: table-cell !important; }
+        body.force-md-active .force-md-block { display: block !important; }
+        body.force-md-active .force-md-hidden { display: none !important; }
+        @media (min-width: 769px) {
+            .force-md { display: table-cell !important; }
+            .force-md-block { display: block !important; }
+            .force-md-hidden { display: none !important; }
+        }
+    </style>
 
     @vite(['resources/css/app.css'])
     
@@ -15,15 +26,22 @@
 </head>
 <body class="bg-gray-100">
 
-    <div class="flex h-screen overflow-hidden">
+    <div class="flex min-h-screen overflow-x-hidden">
         
-        <nav class="w-64 h-full bg-gray-900 text-white flex flex-col fixed">
-            <div class="px-6 py-5 border-b border-gray-700">
-                <div class="text-2xl font-bold">SWALAYAN SEGAR</div>
-                <div class="text-m text-gray-200 mt-1 font-normal">
-                    Halo, {{ Auth::check() ? Auth::user()->name : 'Guest' }} <br>
-                    <span class="text-xs text-gray-400">({{ Auth::check() ? Auth::user()->role : '-' }})</span>
+        <div id="sidebar-overlay" class="fixed inset-0 z-30 hidden bg-slate-900/50 lg:hidden"></div>
+
+        <nav id="sidebar" class="fixed inset-y-0 left-0 z-40 flex h-full w-64 -translate-x-full flex-col bg-gray-900 text-white transition-transform duration-300 lg:translate-x-0">
+            <div class="flex items-start justify-between border-b border-gray-700 px-6 py-5 lg:justify-start">
+                <div>
+                    <div class="text-2xl font-bold">SWALAYAN SEGAR</div>
+                    <div class="mt-1 text-sm font-normal text-gray-200">
+                        Halo, {{ Auth::check() ? Auth::user()->name : 'Guest' }} <br>
+                        <span class="text-xs text-gray-400">({{ Auth::check() ? Auth::user()->role : '-' }})</span>
+                    </div>
                 </div>
+                <button id="sidebar-close-button" type="button" class="rounded-lg bg-gray-800 p-2 text-gray-200 hover:bg-gray-700 lg:hidden" aria-label="Tutup menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                </button>
             </div>
             
             <ul class="flex-1 py-4 space-y-2">
@@ -117,13 +135,23 @@
             </div>
         </nav>
 
-        <main class="flex-1 ml-64 h-full overflow-hidden bg-gray-50">
-            <div class="h-full overflow-y-auto p-6 md:p-8">
+        <main class="flex-1 bg-gray-50 lg:ml-64">
+            @unless(View::hasSection('has_mobile_header'))
+            <div class="border-b border-gray-200 bg-white px-4 py-3 shadow-sm lg:hidden">
+                <button id="sidebar-open-button" type="button" class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50" aria-label="Buka menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5M3.75 12h16.5m-16.5 6.75h16.5" /></svg>
+                    Menu
+                </button>
+            </div>
+            @endunless
+            <div class="overflow-y-auto p-4 sm:p-6 md:p-8 pb-24">
                 @yield('content')
+                <div class="h-24 lg:hidden" aria-hidden="true"></div>
             </div>
         </main>
     </div>
 
+    @vite(['resources/js/app.js'])
     @stack('scripts')
     
 </body>

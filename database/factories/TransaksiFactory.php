@@ -16,12 +16,17 @@ class TransaksiFactory extends Factory
      *
      * @return array<string, mixed>
      */
+    protected static $urutan = 1;
+
     public function definition(): array
     {
+        $subtotal = $this->faker->numberBetween(50000, 500000);
+
         return [
-            'no_transaksi' => 'TRX-' . $this->faker->unique()->numerify('#####'),
+            // Format rapi dan urut!
+            'no_transaksi' => 'TRX-' . now()->format('Ymd') . '-' . str_pad(self::$urutan++, 4, '0', STR_PAD_LEFT),
             'user_id' => User::factory(), 
-            'total_harga' => 0, 
+            'total_harga' => round($subtotal * 1.11, 2), 
             'tanggal' => $this->faker->dateTimeBetween('-1 month', 'now')->format('Y-m-d'),
         ];
     }

@@ -12,6 +12,16 @@ const itemsLimit = 15;
 let totalAvailableTransactions = 0;
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
+const escapeHtml = window.escapeHtml || function(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/`/g, '&#96;');
+};
+
 function formatIDR(num) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
 }
@@ -49,8 +59,12 @@ async function loadSales(page = 1) {
     tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-center text-slate-500">Mencari data transaksi...</td></tr>';
     
     const searchId = searchInput.value.trim();
+    const startDate = document.getElementById('start-date')?.value || '';
+    const endDate = document.getElementById('end-date')?.value || '';
     const params = new URLSearchParams({ limit: itemsLimit.toString(), page: currentPage.toString() });
     if (searchId) params.append('search_id', searchId);
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
     const url = `/api/transaksi_penjualan?${params.toString()}`;
 
     try {
@@ -68,11 +82,11 @@ async function loadSales(page = 1) {
         data.transactions.forEach(sale => {
             tbody.innerHTML += `
                 <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="px-4 py-3 font-semibold text-slate-800">#${sale.id_penjualan}</td>
-                    <td class="px-4 py-3 text-slate-600">${formatDate(sale.tanggal_penjualan)}</td>
+                    <td class="px-4 py-3 font-semibold text-slate-800">#${escapeHtml(sale.id_penjualan)}</td>
+                    <td class="px-4 py-3 text-slate-600">${escapeHtml(sale.tanggal_penjualan)}</td>
                     <td class="px-4 py-3 text-slate-600">
                         <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-800">
-                            ${sale.nama_kasir}
+                            ${escapeHtml(sale.nama_kasir)}
                         </span>
                     </td>
                     <td class="px-4 py-3 font-bold text-emerald-600 text-right">${formatIDR(sale.total_harga)}</td>
@@ -102,20 +116,20 @@ window.viewDetail = async function(id) {
         const data = await response.json();
         
         let itemsHtml = '';
-        data.items.forEach(item => {
+            data.items.forEach(item => {
             const hargaSatuan = item.harga_jual ? item.harga_jual : (item.subtotal / item.jumlah);
             const subtotalItem = item.harga_jual ? (item.harga_jual * item.jumlah) : item.subtotal;
             itemsHtml += `
                 <div class="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
-                    <div><p class="font-medium text-slate-800">${item.nama_barang}</p><p class="text-xs text-slate-500">${item.jumlah} x ${formatIDR(hargaSatuan)}</p></div>
+                    <div><p class="font-medium text-slate-800">${escapeHtml(item.nama_barang)}</p><p class="text-xs text-slate-500">${escapeHtml(item.jumlah)} x ${formatIDR(hargaSatuan)}</p></div>
                     <div class="font-semibold text-slate-700">${formatIDR(subtotalItem)}</div>
                 </div>`;
         });
 
         modalBody.innerHTML = `
-            <div class="mb-4 rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
-                <div class="flex justify-between mb-1"><span>Kasir:</span> <span class="font-semibold text-slate-800">${data.header.nama_kasir}</span></div>
-                <div class="flex justify-between"><span>Waktu:</span> <span>${formatDate(data.header.tanggal_penjualan)}</span></div>
+                <div class="mb-4 rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
+                <div class="flex justify-between mb-1"><span>Kasir:</span> <span class="font-semibold text-slate-800">${escapeHtml(data.header.nama_kasir)}</span></div>
+                <div class="flex justify-between"><span>Waktu:</span> <span>${escapeHtml(data.header.tanggal_penjualan)}</span></div>
             </div>
             <h4 class="mb-2 font-bold text-slate-700 border-b pb-2">Rincian Pembelian</h4>
             <div class="mb-4">${itemsHtml}</div>
@@ -203,20 +217,27 @@ window.removeEditItem = function(index) {
 window.addNewItemToEdit = function() {
     const idInput = document.getElementById('new-item-id');
     const qtyInput = document.getElementById('new-item-qty');
-    const id = parseInt(idInput.value);
+    const searchValue = idInput.value.trim();
     const qty = parseInt(qtyInput.value);
 
-    if(!id || !qty || qty < 1) return alert("Isi ID dan Jumlah dengan benar");
+    if(!searchValue || !qty || qty < 1) return alert("Isi kode barang dan jumlah dengan benar");
 
-    const product = allProducts.find(p => p.id_barang === id);
-    if (!product) return alert(`Barang dengan ID ${id} tidak ditemukan di master data!`);
+    const normalizedSearch = searchValue.toLowerCase();
+    const product = allProducts.find(p => {
+        const idBarang = String(p.id_barang ?? '').toLowerCase();
+        const kodeBarang = String(p.kode_barang ?? '').toLowerCase();
+        const namaBarang = String(p.nama_barang ?? '').toLowerCase();
+        return idBarang === normalizedSearch || kodeBarang === normalizedSearch || namaBarang === normalizedSearch;
+    });
+    if (!product) return alert(`Barang dengan kode/ID ${searchValue} tidak ditemukan di master data!`);
 
-    const existIndex = currentEditItems.findIndex(i => i.id_barang === id);
+    const itemId = product.id_barang ?? product.ID_BARANG ?? product.id;
+    const existIndex = currentEditItems.findIndex(i => String(i.id_barang) === String(itemId));
     if(existIndex !== -1) {
         currentEditItems[existIndex].jumlah += qty;
     } else {
         currentEditItems.push({ 
-            id_barang: id, 
+            id_barang: itemId, 
             nama_barang: product.nama_barang, 
             harga_jual: product.harga_jual,
             jumlah: qty 
@@ -257,6 +278,8 @@ window.saveEditTransaction = async function() {
 };
 
 searchBtn?.addEventListener('click', () => loadSales(1));
+document.getElementById('start-date')?.addEventListener('change', () => loadSales(1));
+document.getElementById('end-date')?.addEventListener('change', () => loadSales(1));
 searchInput?.addEventListener('keyup', (e) => { if (e.key === 'Enter') loadSales(1); });
 prevButton?.addEventListener('click', () => {
     if (currentPage > 1) loadSales(currentPage - 1);

@@ -19,11 +19,14 @@ class DetailTransaksiFactory extends Factory
      */
     public function definition(): array
     {
+        $kuantitas = $this->faker->numberBetween(1, 5);
+        $hargaJual = $this->faker->numberBetween(10, 100) * 1000;
+
         return [
             'transaksi_id' => Transaksi::factory(),
             'barang_id' => Barang::factory(),
-            'kuantitas' => $this->faker->numberBetween(1, 5),
-            'subtotal' => 0, 
+            'kuantitas' => $kuantitas,
+            'subtotal' => $kuantitas * $hargaJual, 
         ];
     }
 }

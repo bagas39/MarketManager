@@ -26,16 +26,13 @@
 
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">Periode Analisis</label>
-                        <div class="relative">
-                            <input type="number" id="periode" value="30" 
-                                class="block w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-medium text-gray-700 focus:ring-2 focus:ring-green-500/20 transition-all">
-                            <div class="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
-                                <span class="text-gray-400 font-bold text-xs uppercase tracking-widest">Hari</span>
-                            </div>
+                        <div class="block w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-medium text-gray-700">
+                            <span class="font-black text-gray-800">30</span>
+                            <span class="text-gray-400 font-bold text-xs uppercase tracking-widest ml-1">Hari Terakhir</span>
                         </div>
                     </div>
 
-                    <button onclick="hitungPrediksi()" id="btn-hitung" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-5 rounded-2xl transition-all active:scale-95">
+                    <button onclick="hitungPrediksi()" id="btn-hitung" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-5 rounded-2xl transition-all active:scale-95 disabled:bg-gray-300 disabled:hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-70" disabled>
                         <span>Hitung Analisis</span>
                     </button>
                 </div>

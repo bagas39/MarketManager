@@ -34,8 +34,10 @@ class KasirController extends Controller
 
         DB::beginTransaction();
         try {
-            $total = 0;
-            $noTransaksi = 'TRX-' . rand(10000, 99999);
+            $subtotal = 0;
+            $today = now()->format('Y-m-d');
+            $urutanHariIni = Transaksi::whereDate('created_at', $today)->count() + 1;
+            $noTransaksi = 'TRX-' . now()->format('Ymd') . '-' . str_pad($urutanHariIni, 4, '0', STR_PAD_LEFT);
 
             $transaksi = Transaksi::create([
                 'no_transaksi' => $noTransaksi,
@@ -55,17 +57,18 @@ class KasirController extends Controller
                 $barang->stok -= $item['jumlah']; 
                 $barang->save();
 
-                $subtotal = $barang->harga_jual * $item['jumlah'];
-                $total += $subtotal;
+                $itemSubtotal = $barang->harga_jual * $item['jumlah'];
+                $subtotal += $itemSubtotal;
 
                 DetailTransaksi::create([
                     'transaksi_id' => $transaksi->id,
                     'barang_id' => $barang->id,
                     'kuantitas' => $item['jumlah'],
-                    'subtotal' => $subtotal
+                    'subtotal' => $itemSubtotal
                 ]);
             }
 
+            $total = round($subtotal * 1.11, 2);
             $transaksi->update(['total_harga' => $total]);
             DB::commit();
 

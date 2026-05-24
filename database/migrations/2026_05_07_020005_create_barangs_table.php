@@ -14,6 +14,7 @@ return new class extends Migration
         $table->id();
         $table->string('kode_barang')->unique();
         $table->string('nama_barang');
+        $table->string('kategori')->default('Umum');
         $table->decimal('harga_beli', 15, 2);
         $table->decimal('harga_jual', 15, 2);
         $table->integer('stok')->default(0);

@@ -14,17 +14,38 @@ class StokOpnameController extends Controller
 
     public function data(Request $request)
     {
-        $items = Barang::select('id', 'nama_barang', 'stok')->get()->map(function($barang) {
+        $limit = (int) $request->query('limit', 10);
+        $page = (int) $request->query('page', 1);
+        $limit = max(1, min($limit, 100));
+        $page = max(1, $page);
+
+        $paginator = Barang::select('id', 'kode_barang', 'nama_barang', 'stok')
+            ->orderBy('nama_barang', 'asc')
+            ->paginate($limit, ['*'], 'page', $page);
+
+        $items = $paginator->getCollection()->map(function($barang) {
             return [
                 'id_barang'   => $barang->id,
+                'kode_barang' => $barang->kode_barang,
                 'nama_barang' => $barang->nama_barang,
                 'stok_sistem' => $barang->stok, 
                 'stok_fisik'  => $barang->stok,
                 'selisih'     => 0,
+                    'keterangan'  => '',
             ];
         });
 
-        return response()->json(['items' => $items]);
+        return response()->json([
+            'items' => $items,
+            'pagination' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'from' => $paginator->firstItem(),
+                'to' => $paginator->lastItem(),
+            ],
+        ]);
     }
 
     public function simpan(Request $request)
@@ -39,6 +60,7 @@ class StokOpnameController extends Controller
                     $stokSistem = $barang->stok;
                     $stokFisik = (int)$item['stok_fisik'];
                     $selisih = $stokFisik - $stokSistem;
+                        $keterangan = trim((string)($item['keterangan'] ?? ''));
 
                     if ($selisih != 0) { 
                         StokOpname::create([
@@ -47,7 +69,7 @@ class StokOpnameController extends Controller
                             'stok_sistem' => $stokSistem,
                             'stok_fisik' => $stokFisik,
                             'selisih' => $selisih,
-                            'keterangan' => 'Opname Penyesuaian'
+                                'keterangan' => $keterangan !== '' ? $keterangan : 'Opname Penyesuaian'
                         ]);
 
                         $barang->stok = $stokFisik;
@@ -64,5 +86,34 @@ class StokOpnameController extends Controller
             DB::rollBack();
             return response()->json(['success' => false, 'message' => 'Gagal memproses Opname: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function history(Request $request)
+    {
+        $limit = (int) $request->query('limit', 50);
+        $limit = max(1, min($limit, 200));
+
+        $query = StokOpname::with(['barang:id,nama_barang,kode_barang', 'user:id,name']);
+
+        $history = $query
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->take($limit)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'kode_barang' => $item->barang->kode_barang ?? '-',
+                    'nama_barang' => $item->barang->nama_barang ?? '-',
+                    'diubah_oleh' => $item->user->name ?? 'Unknown',
+                    'stok_sistem' => $item->stok_sistem,
+                    'stok_fisik' => $item->stok_fisik,
+                    'selisih' => $item->selisih,
+                    'keterangan' => $item->keterangan,
+                    'waktu' => $item->created_at?->format('Y-m-d H:i:s'),
+                ];
+            });
+
+        return response()->json(['items' => $history]);
     }
 }

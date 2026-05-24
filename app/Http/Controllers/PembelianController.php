@@ -8,10 +8,22 @@ use App\Models\Pembelian;
 use App\Models\DetailPembelian;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\QueryException;
 
 class PembelianController extends Controller
 {
     public function index() { return view('transaksi_pembelian'); }
+
+    private function generateNoPembelian(string $date): string
+    {
+        $prefix = 'PO-' . str_replace('-', '', $date) . '-';
+
+        $lastNumber = (int) (Pembelian::where('no_pembelian', 'like', $prefix . '%')
+            ->selectRaw('MAX(CAST(RIGHT(no_pembelian, 4) AS UNSIGNED)) as max_number')
+            ->value('max_number') ?? 0);
+
+        return $prefix . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+    }
 
     public function store(Request $request)
     {
@@ -19,35 +31,69 @@ class PembelianController extends Controller
         try {
             $data = $request->validate([
                 'supplier' => 'required|string',
-                'items'    => 'required|array'
+                'items'    => 'required|array',
+                'items.*.id_barang' => 'nullable|integer|exists:barangs,id',
+                'items.*.namaBarang' => 'required|string|max:255',
+                'items.*.kategori' => 'required|string|max:100',
+                'items.*.hargaBeli' => 'required|numeric|min:1',
+                'items.*.jumlah' => 'required|integer|min:1'
             ]);
 
             $total = 0;
-            $noPembelian = 'PO-' . rand(10000, 99999);
-            
-            $pembelian = Pembelian::create([
-                'no_pembelian' => $noPembelian,
-                'nama_supplier' => $data['supplier'],
-                'user_id' => Auth::id() ?? 1,
-                'total_biaya' => 0,
-                'tanggal' => now()->format('Y-m-d')
-            ]);
+            $today = now()->format('Y-m-d');
+            $pembelian = null;
+
+            for ($attempt = 0; $attempt < 3; $attempt++) {
+                $noPembelian = $this->generateNoPembelian($today);
+
+                try {
+                    $pembelian = Pembelian::create([
+                        'no_pembelian' => $noPembelian,
+                        'nama_supplier' => $data['supplier'],
+                        'user_id' => Auth::id() ?? 1,
+                        'total_biaya' => 0,
+                        'tanggal' => $today
+                    ]);
+                    break;
+                } catch (QueryException $e) {
+                    if ((int) ($e->errorInfo[1] ?? 0) !== 1062 || $attempt === 2) {
+                        throw $e;
+                    }
+                }
+            }
+
+            if (!$pembelian) {
+                throw new \RuntimeException('Gagal membuat nomor pembelian unik.');
+            }
 
             foreach ($data['items'] as $item) {
                 $idBarang = isset($item['id_barang']) ? (int)$item['id_barang'] : null;
-                $jumlah = (int)($item['jumlah'] ?? 1);
-                $hargaBeliInput = (float)($item['hargaBeli'] ?? 0);
+                $jumlah = (int)$item['jumlah'];
+                $hargaBeliInput = (float)$item['hargaBeli'];
+                $kategoriInput = trim((string)($item['kategori'] ?? 'Umum'));
+                $namaBarangInput = trim((string)$item['namaBarang']);
+
+                if ($namaBarangInput === '') {
+                    throw new \InvalidArgumentException('Nama barang tidak boleh kosong.');
+                }
 
                 $barang = $idBarang ? Barang::find($idBarang) : null;
 
                 if ($barang) {
                     $barang->stok += $jumlah;
                     $barang->harga_beli = $hargaBeliInput;
+                    $barang->kategori = $kategoriInput;
                     $barang->save();
                 } else {
+                    $lastBarang = Barang::whereDate('created_at', $today)->orderBy('id', 'desc')->first();
+                    $urutanBarang = $lastBarang ? ((int) substr($lastBarang->kode_barang, -4)) + 1 : 1;
+                    
+                    $kodeBarangBaru = 'BRG-' . now()->format('Ymd') . '-' . str_pad($urutanBarang, 4, '0', STR_PAD_LEFT);
+
                     $barang = Barang::create([
-                        'kode_barang' => 'BRG-' . rand(1000, 9999),
-                        'nama_barang' => $item['namaBarang'] ?? 'Barang Baru',
+                        'kode_barang' => $kodeBarangBaru,
+                        'nama_barang' => $namaBarangInput,
+                        'kategori' => $kategoriInput,
                         'harga_beli' => $hargaBeliInput,
                         'harga_jual' => $hargaBeliInput * 1.2,
                         'stok' => $jumlah

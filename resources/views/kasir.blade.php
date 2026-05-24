@@ -6,35 +6,36 @@
     <h1 class="text-3xl font-bold text-gray-800">Kasir / Point of Sale</h1>
 </header>
 
-<div class="flex flex-wrap lg:flex-nowrap gap-6">
+    @include('components.mobile-header', ['title' => 'Kasir'])
+
+<div class="flex flex-col gap-6 lg:flex-row">
     
     <div class="w-full lg:w-2/3">
-        <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="rounded-lg bg-white p-4 shadow-md sm:p-6">
             <h2 class="text-xl font-semibold mb-4 text-gray-700">Transaksi Baru</h2>
             
-            <form id="add-item-form" class="flex items-end space-x-4 mb-6">
+            <form id="add-item-form" class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:space-x-4">
                 <div class="flex-1">
                     <label for="sku-input" class="block text-sm font-medium text-gray-600">SKU / ID Barang</label>
-                    <input type="text" id="sku-input" placeholder="Masukkan SKU atau ID" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+                    <input type="text" id="sku-input" placeholder="Masukkan SKU atau ID" class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
                 <div>
                     <label for="qty-input" class="block text-sm font-medium text-gray-600">Jumlah</label>
-                    <input type="number" id="qty-input" value="1" min="1" class="mt-1 block w-20 px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition text-center">
+                    <input type="number" id="qty-input" value="1" min="1" class="mt-1 block w-full rounded-lg border border-gray-300 px-4 py-2 text-center shadow-sm transition focus:outline-none focus:ring-2 focus:ring-emerald-500 sm:w-20">
                 </div>
-                <button type="submit" class="bg-emerald-600 text-white px-6 py-2 rounded-lg font-semibold shadow-md hover:bg-emerald-700 transition-colors h-10">
+                <button type="submit" class="h-10 rounded-lg bg-emerald-600 px-6 py-2 font-semibold text-white shadow-md transition-colors hover:bg-emerald-700 sm:w-auto w-full">
                     Tambah
                 </button>
             </form>
 
-            <div class="overflow-x-auto border border-slate-200 rounded-lg">
-                <table class="min-w-full divide-y divide-gray-200 text-left">
+                <x-table-wrapper minWidth="720px" class="divide-y divide-gray-200 text-left">
                     <thead class="bg-slate-50">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Produk</th>
-                            <th scope="col" class="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Harga</th>
-                            <th scope="col" class="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Jumlah</th>
-                            <th scope="col" class="px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Subtotal</th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Aksi</th>
+                            <x-table-th>Produk</x-table-th>
+                            <x-table-th>Harga</x-table-th>
+                            <x-table-th>Jumlah</x-table-th>
+                            <x-table-th>Subtotal</x-table-th>
+                            <x-table-th align="right">Aksi</x-table-th>
                         </tr>
                     </thead>
                     <tbody id="cart-table-body" class="bg-white divide-y divide-gray-200">
@@ -42,13 +43,12 @@
                             <td colspan="5" class="px-6 py-10 text-center text-slate-400 italic">Keranjang masih kosong</td>
                         </tr>
                     </tbody>
-                </table>
-            </div>
+                </x-table-wrapper>
         </div>
     </div>
 
     <div class="w-full lg:w-1/3">
-        <div class="bg-white rounded-lg shadow-md p-6 sticky top-8">
+        <div class="sticky top-8 rounded-lg bg-white p-4 shadow-md sm:p-6">
             <h2 class="text-xl font-semibold mb-6 text-gray-700">Ringkasan Pembayaran</h2>
             
             <div class="space-y-4">

@@ -16,13 +16,18 @@ class PembelianFactory extends Factory
      *
      * @return array<string, mixed>
      */
+    protected static $urutan = 1;
+
     public function definition(): array
     {
+        $subtotal = $this->faker->numberBetween(100000, 1000000);
+
         return [
-            'no_pembelian' => 'PO-' . $this->faker->unique()->numerify('#####'),
+            // Format rapi dan urut!
+            'no_pembelian' => 'PO-' . now()->format('Ymd') . '-' . str_pad(self::$urutan++, 4, '0', STR_PAD_LEFT),
             'nama_supplier' => $this->faker->company(),
             'user_id' => User::factory(),
-            'total_biaya' => 0,
+            'total_biaya' => $subtotal,
             'tanggal' => $this->faker->dateTimeBetween('-2 months', '-1 month')->format('Y-m-d'),
         ];
     }

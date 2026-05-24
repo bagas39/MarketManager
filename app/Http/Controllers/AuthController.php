@@ -35,12 +35,15 @@ class AuthController extends Controller
 
             $user = Auth::user();
 
-            // Redirect sesuai role
-            if ($user->role === 'Gudang') return redirect()->intended('/manajemen_stok');
-            if ($user->role === 'Owner') return redirect()->intended('/laporan_keuangan');
-            if ($user->role === 'Supervisor') return redirect()->intended('/transaksi_penjualan');
+            $redirectPath = match ($user->role) {
+                'Gudang' => '/manajemen_stok',
+                'Owner' => '/laporan_keuangan',
+                'Supervisor' => '/transaksi_penjualan',
+                default => '/',
+            };
 
-            return redirect()->intended('/');
+            // Redirect sesuai role
+            return redirect($redirectPath);
         }
 
         // 4. Feedback Error
@@ -61,14 +64,15 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:Kasir,Gudang,Supervisor,Owner' 
+            'role' => 'required|in:Kasir,Gudang' 
         ], [
             'name.required' => 'Nama lengkap wajib diisi!',
             'email.required' => 'Email wajib diisi!',
             'email.unique' => 'Email sudah terdaftar, gunakan yang lain!',
             'password.required' => 'Password wajib diisi!',
             'password.min' => 'Password minimal 6 karakter!',
-            'password.confirmed' => 'Konfirmasi password tidak cocok!'
+            'password.confirmed' => 'Konfirmasi password tidak cocok!',
+            'role.in' => 'Role yang diperbolehkan hanya Kasir atau Gudang.'
         ]);
 
         // 2. Simpan ke Database & Hash Password 

@@ -3,66 +3,66 @@
 @section('title', 'Transaksi Pembelian - Swalayan Segar')
 
 @section('content')
+    @include('components.mobile-header', ['title' => 'Pembelian'])
 <header class="mb-6 border-b border-gray-200 pb-4">
     <h1 class="text-3xl font-bold text-gray-800 tracking-tight">Transaksi Pembelian (Inbound)</h1>
     <p class="text-gray-500 mt-2">Catat barang masuk dari supplier ke gudang.</p>
 </header>
 
-<div class="flex flex-col xl:flex-row gap-6">
-    <div class="w-full xl:w-2/3 space-y-6">
+<div class="flex flex-col gap-6 xl:flex-row">
+    <div class="w-full space-y-6 xl:w-2/3">
         
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <h2 class="text-lg font-semibold mb-4 text-gray-800">Detail Supplier & Gudang</h2>
-            <div class="grid grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">Nama Supplier</label>
-                    <input type="text" id="supplier-input" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none transition-all placeholder-gray-400" placeholder="Contoh: PT. Makmur">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">ID Gudang</label>
-                    <input type="number" id="gudang-input" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none transition-all" value="1">
-                </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 sm:p-6">
+            <h2 class="text-lg font-semibold mb-4 text-gray-800">Detail Supplier</h2>
+            <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">Nama Supplier</label>
+                <input type="text" id="supplier-input" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none transition-all placeholder-gray-400" placeholder="Contoh: PT. Makmur">
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 sm:p-6">
             <h2 class="text-lg font-semibold mb-4 text-gray-800">Input Barang</h2>
-            <form id="add-item-form" class="grid grid-cols-12 gap-4 items-end">
-                <div class="col-span-6">
+            <form id="add-item-form" class="grid grid-cols-1 gap-4 items-end sm:grid-cols-2 xl:grid-cols-12">
+                <div class="sm:col-span-2 xl:col-span-4">
                     <label class="block text-xs font-medium text-gray-500 mb-1">Nama Barang / SKU</label>
                     <input type="text" id="item-name" class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-green-500 transition-all" placeholder="Contoh: Indomie Goreng" required>
                 </div>
-                <div class="col-span-3">
-                    <label class="block text-xs font-medium text-gray-500 mb-1">Harga Beli</label>
-                    <input type="number" id="item-price" class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-green-500 transition-all" placeholder="Rp" required>
+                <div class="sm:col-span-1 xl:col-span-3">
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Kategori</label>
+                    <input type="text" id="item-category" class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-green-500 transition-all" placeholder="Contoh: Makanan" required>
                 </div>
-                <div class="col-span-2">
+                <div class="sm:col-span-1 xl:col-span-2">
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Harga Beli</label>
+                    <input type="number" id="item-price" min="1" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-green-500 transition-all" placeholder="Rp" required>
+                </div>
+                <div class="sm:col-span-1 xl:col-span-2">
                     <label class="block text-xs font-medium text-gray-500 mb-1">Qty</label>
                     <input type="number" id="item-qty" value="1" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-green-500 text-center transition-all" required>
                 </div>
-                <div class="col-span-1">
+                <div class="sm:col-span-2 xl:col-span-1">
                     <button type="submit" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 font-bold shadow-sm transition-all flex justify-center items-center h-[42px]">+</button>
                 </div>
             </form>
         </div>
 
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 sm:p-6">
             <h2 class="text-lg font-semibold mb-4 text-gray-800">Daftar Barang Masuk</h2>
-            <div class="overflow-hidden border border-gray-200 rounded-lg">
-                <table class="w-full text-sm text-left">
+            <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                <x-table-wrapper minWidth="760px" class="text-sm text-left">
                     <thead class="bg-gray-50 text-gray-500 font-bold border-b">
                         <tr>
-                            <th class="px-4 py-3">Nama Barang</th>
-                            <th class="px-4 py-3 text-right">Harga</th>
-                            <th class="px-4 py-3 text-center">Qty</th>
-                            <th class="px-4 py-3 text-right">Subtotal</th>
-                            <th class="px-4 py-3 text-center">Aksi</th>
+                            <x-table-th>Nama Barang</x-table-th>
+                            <x-table-th>Kategori</x-table-th>
+                            <x-table-th align="right">Harga</x-table-th>
+                            <x-table-th align="center">Qty</x-table-th>
+                            <x-table-th align="right">Subtotal</x-table-th>
+                            <x-table-th align="center">Aksi</x-table-th>
                         </tr>
                     </thead>
                     <tbody id="purchase-list-body" class="divide-y divide-gray-100 bg-white">
-                        <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400 italic">Belum ada item ditambahkan</td></tr>
+                        <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400 italic">Belum ada item ditambahkan</td></tr>
                     </tbody>
-                </table>
+                </x-table-wrapper>
             </div>
             <div class="mt-6 flex justify-between items-center border-t border-gray-100 pt-4">
                 <div>
@@ -75,7 +75,7 @@
     </div>
 
     <div class="w-full xl:w-1/3">
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-[calc(100vh-8rem)] sticky top-6 flex flex-col">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 xl:sticky xl:top-6 xl:h-[calc(100vh-8rem)] flex flex-col sm:p-6">
             <h2 class="text-lg font-semibold mb-4 text-gray-800">Riwayat Pembelian</h2>
             <div class="space-y-3 mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <input type="text" id="filter-supplier" placeholder="Cari Supplier..." class="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white focus:outline-none focus:ring-1 focus:ring-green-500 transition">

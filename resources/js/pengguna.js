@@ -1,45 +1,90 @@
 const tbody = document.getElementById('users-table-body');
+const mobileList = document.getElementById('users-mobile-list');
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 let currentUsers = [];
 
+const escapeHtml = window.escapeHtml || function(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/`/g, '&#96;');
+};
+
 async function loadUsers() {
     tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-center text-slate-500">Memuat data...</td></tr>';
+    if (mobileList) {
+        mobileList.innerHTML = '<div class="rounded-xl border border-slate-200 bg-white p-4 text-slate-400 shadow-sm">Memuat data...</div>';
+    }
     try {
         const response = await fetch('/api/users');
         currentUsers = await response.json();
         renderTable();
     } catch (error) {
         tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-center text-red-500">Gagal memuat data.</td></tr>';
+        if (mobileList) {
+            mobileList.innerHTML = '<div class="rounded-xl border border-red-200 bg-white p-4 text-red-500 shadow-sm">Gagal memuat data.</div>';
+        }
     }
+}
+
+function roleBadgeClass(role) {
+    if (role === 'Owner') return 'bg-purple-100 text-purple-700';
+    if (role === 'Supervisor') return 'bg-blue-100 text-blue-700';
+    if (role === 'Kasir') return 'bg-emerald-100 text-emerald-700';
+    return 'bg-slate-100 text-slate-700';
 }
 
 function renderTable() {
     tbody.innerHTML = '';
+    if (mobileList) {
+        mobileList.innerHTML = '';
+    }
     if (currentUsers.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-center text-slate-500">Belum ada pengguna.</td></tr>';
+        if (mobileList) {
+            mobileList.innerHTML = '<div class="rounded-xl border border-slate-200 bg-white p-4 text-center text-slate-500 shadow-sm">Belum ada pengguna.</div>';
+        }
         return;
     }
 
     currentUsers.forEach(user => {
-        let roleColor = 'bg-slate-100 text-slate-700';
-        if(user.role === 'Owner') roleColor = 'bg-purple-100 text-purple-700';
-        if(user.role === 'Supervisor') roleColor = 'bg-blue-100 text-blue-700';
-        if(user.role === 'Kasir') roleColor = 'bg-emerald-100 text-emerald-700';
-
+        const roleColor = roleBadgeClass(user.role);
         tbody.innerHTML += `
             <tr class="border-b border-slate-100 hover:bg-slate-50">
-                <td class="px-4 py-3 text-sm text-slate-600">${user.id}</td>
-                <td class="px-4 py-3 text-sm font-semibold text-slate-800">${user.username}</td>
-                <td class="px-4 py-3 text-sm text-slate-600">${user.nama}</td>
+                <td class="px-4 py-3 text-sm text-slate-600">${escapeHtml(user.id)}</td>
+                <td class="px-4 py-3 text-sm font-semibold text-slate-800">${escapeHtml(user.username)}</td>
+                <td class="px-4 py-3 text-sm text-slate-600">${escapeHtml(user.nama)}</td>
                 <td class="px-4 py-3 text-sm text-slate-600">
-                    <span class="px-2 py-1 text-xs font-bold rounded-full ${roleColor}">${user.role}</span>
+                    <span class="px-2 py-1 text-xs font-bold rounded-full ${roleColor}">${escapeHtml(user.role)}</span>
                 </td>
                 <td class="px-4 py-3 text-center space-x-1">
-                    <button onclick="openEditModal(${user.id})" class="px-3 py-1.5 text-xs font-semibold text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-md transition">Edit</button>
-                    <button onclick="deleteUser(${user.id}, '${user.username}')" class="px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition">Hapus</button>
+                    <button data-action="edit" data-user-id="${escapeHtml(user.id)}" class="px-3 py-1.5 text-xs font-semibold text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-md transition">Edit</button>
+                    <button data-action="delete" data-user-id="${escapeHtml(user.id)}" data-username=${JSON.stringify(user.username)} class="px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition">Hapus</button>
                 </td>
             </tr>
         `;
+
+        if (mobileList) {
+            mobileList.innerHTML += `
+                <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">ID ${escapeHtml(user.id)}</p>
+                            <h3 class="mt-1 text-base font-bold text-slate-800 break-words">${escapeHtml(user.username)}</h3>
+                            <p class="mt-1 text-sm text-slate-600 break-words">${escapeHtml(user.nama)}</p>
+                        </div>
+                        <span class="shrink-0 rounded-full px-2 py-1 text-xs font-bold ${roleColor}">${escapeHtml(user.role)}</span>
+                    </div>
+                    <div class="mt-4 flex gap-2">
+                        <button data-action="edit" data-user-id="${escapeHtml(user.id)}" class="flex-1 rounded-lg bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-600 transition hover:bg-amber-100">Edit</button>
+                        <button data-action="delete" data-user-id="${escapeHtml(user.id)}" data-username=${JSON.stringify(user.username)} class="flex-1 rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-100">Hapus</button>
+                    </div>
+                </div>
+            `;
+        }
     });
 }
 
@@ -57,7 +102,7 @@ window.closeAddModal = function() {
 window.saveUser = async function() {
     const btn = document.getElementById('btn-save');
     const username = document.getElementById('add-username').value.trim();
-    const password = document.getElementById('add-password').value; // Ambil password
+    const password = document.getElementById('add-password').value;
     const nama = document.getElementById('add-nama').value.trim();
     const role = document.getElementById('add-role').value;
 
@@ -162,3 +207,22 @@ window.deleteUser = async function(id, username) {
 };
 
 document.addEventListener('DOMContentLoaded', loadUsers);
+
+function handleUserActionClick(e) {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const action = btn.getAttribute('data-action');
+    const userId = btn.getAttribute('data-user-id');
+    const username = btn.getAttribute('data-username') || btn.getAttribute('data-username');
+
+    if (action === 'edit') {
+        openEditModal(Number(userId));
+    } else if (action === 'delete') {
+        let uname = username;
+        try { uname = JSON.parse(username); } catch (ignored) {  }
+        deleteUser(Number(userId), uname);
+    }
+}
+
+if (tbody) tbody.addEventListener('click', handleUserActionClick);
+if (mobileList) mobileList.addEventListener('click', handleUserActionClick);

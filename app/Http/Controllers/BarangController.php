@@ -9,7 +9,7 @@ class BarangController extends Controller
 {
     public function getBarang()
     {
-        $barangs = Barang::select('id', 'kode_barang', 'nama_barang', 'harga_beli', 'harga_jual', 'stok')
+        $barangs = Barang::select('id', 'kode_barang', 'nama_barang', 'kategori', 'harga_beli', 'harga_jual', 'stok')
             ->orderBy('nama_barang', 'asc')
             ->get()
             ->map(function($item) {
@@ -28,8 +28,11 @@ class BarangController extends Controller
         $query = Barang::query();
 
         if ($searchNama) {
-            $query->where('nama_barang', 'like', "%{$searchNama}%")
-                  ->orWhere('kode_barang', 'like', "%{$searchNama}%");
+            $query->where(function ($subQuery) use ($searchNama) {
+                $subQuery->where('nama_barang', 'like', "%{$searchNama}%")
+                    ->orWhere('kode_barang', 'like', "%{$searchNama}%")
+                    ->orWhere('kategori', 'like', "%{$searchNama}%");
+            });
         }
 
         $paginator = $query->orderBy('nama_barang', 'asc')->paginate($limit);

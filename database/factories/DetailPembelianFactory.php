@@ -19,12 +19,15 @@ class DetailPembelianFactory extends Factory
      */
     public function definition(): array
     {
+        $kuantitas = $this->faker->numberBetween(10, 50);
+        $hargaBeli = $this->faker->numberBetween(5, 50) * 1000;
+
         return [
             'pembelian_id' => Pembelian::factory(),
             'barang_id' => Barang::factory(),
-            'harga_beli' => 0, 
-            'kuantitas' => $this->faker->numberBetween(10, 50),
-            'subtotal' => 0, 
+            'harga_beli' => $hargaBeli, 
+            'kuantitas' => $kuantitas,
+            'subtotal' => $kuantitas * $hargaBeli, 
         ];
     }
 }
