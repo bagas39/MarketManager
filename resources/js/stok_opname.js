@@ -79,23 +79,23 @@ function renderTable() {
         
                 tbody.innerHTML += `
             <tr class="border-b hover:bg-gray-50">
-                <td class="px-3 py-3 md:px-6 md:py-4 text-sm text-gray-900">${escapeHtml(item.kode_barang || item.id_barang)}</td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-sm text-gray-700 font-medium">${escapeHtml(item.nama_barang)}</td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-sm text-center text-gray-600">${escapeHtml(item.stok_sistem)}</td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-center">
+                        <td class="px-3 py-3 md:px-5 md:py-3 text-sm text-gray-900">${escapeHtml(item.kode_barang || item.id_barang)}</td>
+                        <td class="px-3 py-3 md:px-5 md:py-3 text-sm text-gray-700 font-medium">${escapeHtml(item.nama_barang)}</td>
+                        <td class="px-3 py-3 md:px-5 md:py-3 text-sm text-center text-gray-600">${escapeHtml(item.stok_sistem)}</td>
+                        <td class="px-3 py-3 md:px-5 md:py-3 text-center">
                     <input type="number" 
-                           class="w-20 border border-gray-300 rounded px-2 py-1 text-center focus:ring-green-500 focus:border-green-500" 
+                                   class="w-16 lg:w-14 border border-gray-300 rounded px-1.5 py-1 text-center text-sm focus:ring-green-500 focus:border-green-500" 
                            value="${escapeHtml(item.stok_fisik)}" 
                            oninput="updateSelisih(${index}, this.value)">
                 </td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-center hidden force-md">
+                        <td class="px-3 py-3 md:px-5 md:py-3 text-center hidden force-md">
                     <input type="text"
-                           class="w-52 border border-gray-300 rounded px-3 py-1 text-sm focus:ring-green-500 focus:border-green-500"
+                                   class="w-40 lg:w-36 border border-gray-300 rounded px-2 py-1 text-xs lg:text-sm focus:ring-green-500 focus:border-green-500"
                            value="${escapeHtml(item.keterangan || '')}"
                            placeholder="Alasan perubahan"
                            oninput="updateKeterangan(${index}, this.value)">
                 </td>
-                <td class="px-3 py-3 md:px-6 md:py-4 text-center font-bold ${selisihClass} hidden force-md" id="selisih-${index}">
+                        <td class="px-3 py-3 md:px-5 md:py-3 text-center font-bold ${selisihClass} hidden force-md text-sm" id="selisih-${index}">
                     ${escapeHtml(selisih)}
                 </td>
             </tr>

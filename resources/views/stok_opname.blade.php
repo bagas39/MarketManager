@@ -7,16 +7,16 @@
 @section('content')
     @include('components.mobile-header', ['title' => 'Stok Opname'])
     <header class="mb-6"><h1 class="text-3xl font-bold text-gray-800">Stok Opname / Perhitungan Fisik Stok</h1></header>
-    <div class="bg-white rounded-lg shadow-md p-4 sm:p-6">
+    <div class="bg-white rounded-lg shadow-md p-4 sm:p-6 lg:p-4">
         <p class="mb-6 text-gray-600">Lakukan perhitungan fisik jumlah barang di rak, lalu masukkan hasilnya di kolom <strong>'Stok Fisik'</strong> untuk mencocokkan dengan data sistem.</p>
             <div class="">
-                <x-table-wrapper minWidth="900px">
+                <x-table-wrapper>
                     <thead class="bg-gray-50">
                         <tr>
-                            <x-table-th>Kode Produk</x-table-th>
-                            <x-table-th>Nama Produk</x-table-th>
-                            <x-table-th align="center">Stok Sistem</x-table-th>
-                            <x-table-th align="center">Stok Fisik (Input)</x-table-th>
+                            <x-table-th extra="lg:px-3 lg:py-2">Kode Produk</x-table-th>
+                            <x-table-th extra="lg:px-3 lg:py-2">Nama Produk</x-table-th>
+                            <x-table-th align="center" extra="lg:px-3 lg:py-2">Stok Sistem</x-table-th>
+                            <x-table-th align="center" extra="lg:px-3 lg:py-2">Stok Fisik (Input)</x-table-th>
                             <x-table-th :force="true" align="center">Keterangan</x-table-th>
                             <x-table-th :force="true" align="center">Selisih</x-table-th>
                         </tr>
@@ -28,7 +28,7 @@
                     </tbody>
                 </x-table-wrapper>
             </div>
-        <div class="mt-4 flex flex-col gap-3 border-t border-gray-200 pt-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="mt-4 flex flex-col gap-3 border-t border-gray-200 pt-4 lg:flex-row lg:items-center lg:justify-between lg:gap-2">
             <p id="opname-pagination-info" class="text-sm text-gray-600">Memuat pagination...</p>
             <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <button id="opname-prev-page" type="button" onclick="goToPrevOpnamePage()" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">

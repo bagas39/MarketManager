@@ -24,45 +24,45 @@
     <h1 class="text-3xl font-bold text-gray-800">Manajemen Stok</h1>
 </header>
 
-<div class="mb-6 rounded-lg bg-white p-4 shadow-md">
-    <div class="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-center">
+<div class="mb-6 rounded-lg bg-white p-4 shadow-md lg:p-4">
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-center lg:gap-2">
         <div class="md:col-span-3">
-            <input type="date" id="start-date" class="w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-green-500" aria-label="Tanggal awal">
+            <input type="date" id="start-date" class="w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-green-500 lg:px-3 lg:py-2" aria-label="Tanggal awal">
         </div>
         <div class="hidden text-center text-gray-500 md:col-span-1 md:block">-</div>
         <div class="md:col-span-3">
-            <input type="date" id="end-date" class="w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-green-500" aria-label="Tanggal akhir">
+            <input type="date" id="end-date" class="w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-green-500 lg:px-3 lg:py-2" aria-label="Tanggal akhir">
         </div>
         <div class="relative md:col-span-4">
-            <input type="text" id="stok-search-input" placeholder="Cari Nama Barang / ID..." class="w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-green-500">
+            <input type="text" id="stok-search-input" placeholder="Cari Nama Barang / ID..." class="w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-green-500 lg:px-3 lg:py-2">
         </div>
         <div class="md:col-span-1">
-            <button id="search-btn" class="w-full rounded-lg bg-green-600 px-4 py-2 font-semibold text-white transition hover:bg-green-700">Cari</button>
+            <button id="search-btn" class="w-full rounded-lg bg-green-600 px-4 py-2 font-semibold text-white transition hover:bg-green-700 lg:px-3 lg:py-2">Cari</button>
         </div>
     </div>
 </div>
 
 <div class="bg-white rounded-lg shadow-md overflow-hidden">
-    <x-table-wrapper minWidth="760px" class="bg-white rounded-lg shadow-md">
+    <x-table-wrapper class="bg-white rounded-lg shadow-md">
         <thead class="bg-gray-50">
             <tr>
-                <x-table-th>ID/SKU</x-table-th>
-                <x-table-th>Nama Barang</x-table-th>
-                <x-table-th :force="true">Kategori</x-table-th>
-                <x-table-th>Harga Beli</x-table-th>
-                <x-table-th :force="true" align="right">Harga Jual</x-table-th>
-                <x-table-th align="right">Stok</x-table-th>
-                <x-table-th align="right">Aksi</x-table-th>
+                <x-table-th extra="lg:px-3 lg:py-2">ID/SKU</x-table-th>
+                <x-table-th extra="lg:px-3 lg:py-2">Nama Barang</x-table-th>
+                <x-table-th :force="true" extra="lg:px-3 lg:py-2">Kategori</x-table-th>
+                <x-table-th extra="lg:px-3 lg:py-2">Harga Beli</x-table-th>
+                <x-table-th :force="true" align="right" extra="lg:px-3 lg:py-2">Harga Jual</x-table-th>
+                <x-table-th align="right" extra="lg:px-3 lg:py-2">Stok</x-table-th>
+                <x-table-th align="right" extra="lg:px-3 lg:py-2">Aksi</x-table-th>
             </tr>
         </thead>
         <tbody id="stok-table-body" class="bg-white divide-y divide-gray-200">
             <tr id="loading-row">
-                <td colspan="7" class="px-6 py-10 text-center text-gray-500">Memuat data stok...</td>
+                <td colspan="7" class="px-4 py-8 text-center text-gray-500 lg:px-4 lg:py-6">Memuat data stok...</td>
             </tr>
         </tbody>
     </x-table-wrapper>
     
-    <div class="p-4 flex items-center justify-between border-t border-gray-200">
+    <div class="flex items-center justify-between border-t border-gray-200 p-4 lg:p-3">
         <div><span id="page-info" class="text-sm text-gray-600">Menampilkan 0-0 dari 0</span></div>
         <div class="flex space-x-2">
             <button id="prev-button" class="pagination-button" disabled>Sebelumnya</button>

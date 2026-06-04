@@ -95,14 +95,14 @@ function renderTable(items) {
         const stokClass = item.stok <= 0 ? 'text-red-600 font-semibold' : 'text-gray-700';
         
         row.innerHTML = `
-            <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm font-medium text-gray-900 w-36">${escapeHtml(item.kode_barang || item.id_barang)}</td>
-            <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-700 max-w-[240px] truncate">${escapeHtml(item.nama_barang)}</td>
-            <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-700 hidden force-md">${escapeHtml(item.kategori || 'N/A')}</td>
-            <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-700 text-right">${formatCurrency(item.harga_beli)}</td>
-            <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-700 text-right hidden force-md">${formatCurrency(item.harga_jual)}</td>
-            <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm ${stokClass} text-right">${escapeHtml(item.stok)}</td>
-            <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-right">
-                ${item.stok <= 0 ? `<button onclick="window.deleteBarang(${item.id})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold">Hapus</button>` : ''}
+            <td class="px-3 py-2 md:px-5 md:py-3 whitespace-nowrap text-sm font-medium text-gray-900 w-32 lg:w-28">${escapeHtml(item.kode_barang || item.id_barang)}</td>
+            <td class="px-3 py-2 md:px-5 md:py-3 whitespace-nowrap text-sm text-gray-700 max-w-[200px] truncate">${escapeHtml(item.nama_barang)}</td>
+            <td class="px-3 py-2 md:px-5 md:py-3 whitespace-nowrap text-sm text-gray-700 hidden force-md">${escapeHtml(item.kategori || 'N/A')}</td>
+            <td class="px-3 py-2 md:px-5 md:py-3 whitespace-nowrap text-sm text-gray-700 text-right">${formatCurrency(item.harga_beli)}</td>
+            <td class="px-3 py-2 md:px-5 md:py-3 whitespace-nowrap text-sm text-gray-700 text-right hidden force-md">${formatCurrency(item.harga_jual)}</td>
+            <td class="px-3 py-2 md:px-5 md:py-3 whitespace-nowrap text-sm ${stokClass} text-right">${escapeHtml(item.stok)}</td>
+            <td class="px-3 py-2 md:px-5 md:py-3 whitespace-nowrap text-sm text-right">
+                ${item.stok <= 0 ? `<button onclick="window.deleteBarang(${item.id})" class="bg-red-500 hover:bg-red-600 text-white px-2.5 py-1 rounded text-xs font-semibold">Hapus</button>` : ''}
             </td>
         `;
         tableBody.appendChild(row);
