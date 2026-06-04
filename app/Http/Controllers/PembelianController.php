@@ -146,4 +146,33 @@ class PembelianController extends Controller
 
         return response()->json(['purchases' => $history]);
     }
+
+    public function destroy(Request $request, $noPembelian)
+    {
+        DB::beginTransaction();
+        try {
+            $pembelian = Pembelian::where('no_pembelian', $noPembelian)->first();
+
+            if (!$pembelian) {
+                return response()->json(['success' => false, 'message' => 'Pembelian tidak ditemukan.'], 404);
+            }
+
+            foreach ($pembelian->detailPembelians as $detail) {
+                $barang = $detail->barang;
+                if ($barang) {
+                    $barang->stok = max(0, ($barang->stok ?? 0) - ($detail->kuantitas ?? 0));
+                    $barang->save();
+                }
+            }
+
+            $pembelian->detailPembelians()->delete();
+            $pembelian->delete();
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Pembelian berhasil dihapus.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
 }

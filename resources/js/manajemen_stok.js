@@ -2,10 +2,14 @@ let currentPage = 1;
 const itemsLimit = 15;
 let totalAvailableItems = 0;
 let debounceTimer;
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
 const tableBody = document.getElementById('stok-table-body');
 const loadingRow = document.getElementById('loading-row');
 const searchInput = document.getElementById('stok-search-input');
+const startDateInput = document.getElementById('start-date');
+const endDateInput = document.getElementById('end-date');
+const searchBtn = document.getElementById('search-btn');
 const prevButton = document.getElementById('prev-button');
 const nextButton = document.getElementById('next-button');
 const pageInfo = document.getElementById('page-info');
@@ -44,9 +48,15 @@ async function fetchStok(page) {
     if (page === 1) { tableBody.innerHTML = ''; }
     tableBody.appendChild(loadingRow);
     
-    const searchNama = searchInput.value.trim();
+    const rawSearch = (searchInput?.value || '').trim();
+    const searchNama = rawSearch.replace(/\s+/g, ' ');
+    const startDate = startDateInput?.value || '';
+    const endDate = endDateInput?.value || '';
+
     const params = new URLSearchParams({ page: page, limit: itemsLimit });
     if (searchNama) { params.append('search_nama', searchNama); }
+    if (startDate) { params.append('start_date', startDate); }
+    if (endDate) { params.append('end_date', endDate); }
     
     try {
         const response = await fetch(`/api/manajemen_stok?${params.toString()}`);
@@ -64,7 +74,7 @@ async function fetchStok(page) {
     } catch (error) {
         console.error("Error fetching stok:", error);
         loadingRow.style.display = 'none';
-        tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-red-600">Gagal memuat data: ${escapeHtml(error.message)}</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-10 text-center text-red-600">Gagal memuat data: ${escapeHtml(error.message)}</td></tr>`;
         showMessage('Error', `Gagal memuat data stok. ${escapeHtml(error.message)}`);
     }
 }
@@ -74,7 +84,7 @@ function renderTable(items) {
     tableBody.innerHTML = '';
     
     if (items.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-gray-500">Tidak ada data barang yang ditemukan.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="7" class="px-6 py-10 text-center text-gray-500">Tidak ada data barang yang ditemukan.</td></tr>`;
         return;
     }
     
@@ -91,9 +101,37 @@ function renderTable(items) {
             <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-700 text-right">${formatCurrency(item.harga_beli)}</td>
             <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-700 text-right hidden force-md">${formatCurrency(item.harga_jual)}</td>
             <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm ${stokClass} text-right">${escapeHtml(item.stok)}</td>
+            <td class="px-3 py-2 md:px-6 md:py-4 whitespace-nowrap text-sm text-right">
+                ${item.stok <= 0 ? `<button onclick="window.deleteBarang(${item.id})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold">Hapus</button>` : ''}
+            </td>
         `;
         tableBody.appendChild(row);
     });
+}
+
+window.deleteBarang = async function(id) {
+    if (!id) return;
+    if(!confirm('Yakin ingin menghapus barang ini?')) return;
+
+    try {
+        const res = await fetch(`/api/barang/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            }
+        });
+        const json = await res.json();
+        if (res.ok && json.success) {
+            showMessage('Sukses', json.message || 'Barang berhasil dihapus.');
+            fetchStok(currentPage);
+        } else {
+            showMessage('Gagal', json.message || 'Gagal menghapus barang.');
+        }
+    } catch (e) {
+        console.error('Error deleting barang:', e);
+        showMessage('Error Jaringan', e.message || 'Gagal terhubung ke server.');
+    }
 }
 
 function updatePaginationControls(loadedCount) {
@@ -105,7 +143,7 @@ function updatePaginationControls(loadedCount) {
 }
 
 document.addEventListener('DOMContentLoaded', () => { 
-    fetchStok(currentPage); 
+    fetchStok(currentPage);
 });
 
 prevButton.addEventListener('click', () => { 
@@ -122,6 +160,14 @@ searchInput.addEventListener('input', () => {
         fetchStok(1); 
     }, 500);
 });
+
+searchInput?.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') fetchStok(1);
+});
+
+searchBtn?.addEventListener('click', () => fetchStok(1));
+startDateInput?.addEventListener('change', () => fetchStok(1));
+endDateInput?.addEventListener('change', () => fetchStok(1));
 
 messageModalEl.addEventListener('click', (e) => { 
     if (e.target === messageModalEl) hideMessage(); 

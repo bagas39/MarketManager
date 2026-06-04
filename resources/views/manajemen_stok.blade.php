@@ -24,12 +24,21 @@
     <h1 class="text-3xl font-bold text-gray-800">Manajemen Stok</h1>
 </header>
 
-<div class="mb-6 flex flex-col gap-4 rounded-lg bg-white p-4 shadow-md lg:flex-row lg:items-center lg:justify-end lg:space-x-4">
-    <div class="relative w-full lg:w-72">
-        <input type="text" id="stok-search-input" placeholder="Cari Nama Barang / ID..." class="w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-green-500">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" class="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-        </svg>
+<div class="mb-6 rounded-lg bg-white p-4 shadow-md">
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-center">
+        <div class="md:col-span-3">
+            <input type="date" id="start-date" class="w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-green-500" aria-label="Tanggal awal">
+        </div>
+        <div class="hidden text-center text-gray-500 md:col-span-1 md:block">-</div>
+        <div class="md:col-span-3">
+            <input type="date" id="end-date" class="w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-green-500" aria-label="Tanggal akhir">
+        </div>
+        <div class="relative md:col-span-4">
+            <input type="text" id="stok-search-input" placeholder="Cari Nama Barang / ID..." class="w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-green-500">
+        </div>
+        <div class="md:col-span-1">
+            <button id="search-btn" class="w-full rounded-lg bg-green-600 px-4 py-2 font-semibold text-white transition hover:bg-green-700">Cari</button>
+        </div>
     </div>
 </div>
 
@@ -43,11 +52,12 @@
                 <x-table-th>Harga Beli</x-table-th>
                 <x-table-th :force="true" align="right">Harga Jual</x-table-th>
                 <x-table-th align="right">Stok</x-table-th>
+                <x-table-th align="right">Aksi</x-table-th>
             </tr>
         </thead>
         <tbody id="stok-table-body" class="bg-white divide-y divide-gray-200">
             <tr id="loading-row">
-                <td colspan="6" class="px-6 py-10 text-center text-gray-500">Memuat data stok...</td>
+                <td colspan="7" class="px-6 py-10 text-center text-gray-500">Memuat data stok...</td>
             </tr>
         </tbody>
     </x-table-wrapper>

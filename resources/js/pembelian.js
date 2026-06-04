@@ -206,8 +206,13 @@ async function loadHistory() {
                         <div class="text-xs text-slate-500 mb-1">Supplier</div>
                         <div class="text-sm font-semibold text-slate-700 mb-2 truncate">${escapeHtml(p.supplier)}</div>
                         <div class="border-t border-slate-100 pt-2 flex justify-between items-center">
-                            <span class="text-xs text-slate-400">Total</span>
-                            <span class="text-sm font-bold text-emerald-600">${formatIDR(p.total_beli)}</span>
+                            <div>
+                                <span class="text-xs text-slate-400">Total</span>
+                                <span class="text-sm font-bold text-emerald-600 ml-2">${formatIDR(p.total_beli)}</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="deletePurchase('${escapeHtml(p.id_pembelian)}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold">Hapus</button>
+                            </div>
                         </div>
                     </div>`;
             });
@@ -216,6 +221,30 @@ async function loadHistory() {
         }
     } catch(e) {
         container.innerHTML = '<p class="text-red-500 text-center py-4 text-sm">Gagal memuat history.</p>';
+    }
+}
+
+window.deletePurchase = async function(noPembelian) {
+    if(!noPembelian) return;
+    if(!confirm(`Hapus pembelian ${noPembelian}? Tindakan ini akan mengurangi stok sesuai item yang ada.`)) return;
+
+    try {
+        const res = await fetch(`/pembelian/${encodeURIComponent(noPembelian)}`, {
+            method: 'DELETE',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            }
+        });
+        const json = await res.json();
+        if(res.ok && json.success) {
+            modal('Sukses', json.message || 'Pembelian berhasil dihapus.');
+            loadHistory();
+        } else {
+            modal('Gagal', json.message || 'Gagal menghapus pembelian.');
+        }
+    } catch(e) {
+        modal('Error Jaringan', e.message);
     }
 }
 

@@ -54,6 +54,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:Kasir,Gudang,Supervisor')->group(function () {
         Route::get('/manajemen_stok', [StokController::class, 'index']);
         Route::get('/api/manajemen_stok', [BarangController::class, 'listStok']);
+        Route::delete('/api/barang/{id}', [BarangController::class, 'destroy']);
     });
 
     //  TRANSAKSI PEMBELIAN ( Gudang, Supervisor) 
@@ -61,6 +62,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/transaksi_pembelian', [PembelianController::class, 'index']);
         Route::post('/pembelian/store', [PembelianController::class, 'store']);
         Route::get('/pembelian/history', [PembelianController::class, 'history']);
+        Route::delete('/pembelian/{no_pembelian}', [PembelianController::class, 'destroy']);
     });
 
     //  STOK OPNAME ( Gudang, Supervisor) 
