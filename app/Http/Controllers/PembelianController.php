@@ -18,9 +18,14 @@ class PembelianController extends Controller
     {
         $prefix = 'PO-' . str_replace('-', '', $date) . '-';
 
-        $lastNumber = (int) (Pembelian::where('no_pembelian', 'like', $prefix . '%')
-            ->selectRaw('MAX(CAST(RIGHT(no_pembelian, 4) AS UNSIGNED)) as max_number')
-            ->value('max_number') ?? 0);
+        $lastNoPembelian = Pembelian::where('no_pembelian', 'like', $prefix . '%')
+            ->orderByDesc('no_pembelian')
+            ->value('no_pembelian');
+
+        $lastNumber = 0;
+        if (is_string($lastNoPembelian) && preg_match('/(\d{4})$/', $lastNoPembelian, $matches)) {
+            $lastNumber = (int) $matches[1];
+        }
 
         return $prefix . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
     }
