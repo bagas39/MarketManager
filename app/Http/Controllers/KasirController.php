@@ -22,7 +22,7 @@ class KasirController extends Controller
 
     public function storeTransaksi(Request $request)
     {
-        // 1. VALIDASI 
+        // 1. VALIDASI
         $validated = $request->validate([
             'items' => 'required|array|min:1',
             'items.*.id_barang' => 'required|integer|exists:barangs,id', // Harus ada di tabel barangs
@@ -40,21 +40,23 @@ class KasirController extends Controller
             $noTransaksi = 'TRX-' . now()->format('Ymd') . '-' . str_pad($urutanHariIni, 4, '0', STR_PAD_LEFT);
 
             $transaksi = Transaksi::create([
-                'no_transaksi' => $noTransaksi,
-                'user_id' => Auth::id() ?? 1,
-                'total_harga' => 0,
-                'tanggal' => now()->format('Y-m-d')
+                'no_transaksi'   => $noTransaksi,
+                'user_id'        => Auth::id() ?? 1,
+                'total_harga'    => 0,
+                'tanggal'        => now()->format('Y-m-d'),
+                'payment_method' => 'tunai',
+                'status'         => 'paid',
             ]);
 
             foreach($validated['items'] as $item) {
                 // Lock for update mencegah error jika ada 2 kasir check-out barang sama bersamaan
                 $barang = Barang::where('id', $item['id_barang'])->lockForUpdate()->first();
-                
+
                 if ($barang->stok < $item['jumlah']) {
                     throw new \Exception("Stok {$barang->nama_barang} tidak mencukupi! (Sisa: {$barang->stok})");
                 }
 
-                $barang->stok -= $item['jumlah']; 
+                $barang->stok -= $item['jumlah'];
                 $barang->save();
 
                 $itemSubtotal = $barang->harga_jual * $item['jumlah'];

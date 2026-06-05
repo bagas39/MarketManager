@@ -7,22 +7,25 @@ use Illuminate\Database\Eloquent\Model;
 
 class Transaksi extends Model
 {
-    /** @use HasFactory<\Database\Factories\TransaksiFactory> */
     use HasFactory;
 
     protected $fillable = [
         'no_transaksi',
         'user_id',
         'total_harga',
-        'tanggal'
+        'tanggal',
+        'payment_method',
+        'xendit_qr_id',
+        'status',
     ];
 
-    public function user() {
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
 
-    public function detailTransaksis() {
+    public function detailTransaksis()
+    {
         return $this->hasMany(DetailTransaksi::class);
     }
-
 }
