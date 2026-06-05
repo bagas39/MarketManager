@@ -1,4 +1,4 @@
-@extends('layouts.app') @section('title', 'Laporan Keuangan - Swalayan Segar')
+@extends('layouts.app') @section('title', 'Laporan Keuangan - MarketManager')
 
 @section('content')
     @include('components.mobile-header', ['title' => 'Laporan Keuangan'])

@@ -19,7 +19,7 @@
 </head>
 <body>
     <div class="header">
-        <h2>LAPORAN KEUANGAN - SWALAYAN SEGAR</h2>
+        <h2>LAPORAN KEUANGAN - MarketManager</h2>
         <p>Periode: {{ $startDate ? $startDate : 'Awal' }} s/d {{ $endDate ? $endDate : 'Sekarang' }}</p>
     </div>
 

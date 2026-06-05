@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Swalayan Segar')</title>
+    <title>@yield('title', 'MarketManager')</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>body { font-family: 'Inter', sans-serif; }</style>
@@ -33,7 +33,7 @@
         <nav id="sidebar" class="fixed inset-y-0 left-0 z-40 flex h-full w-64 -translate-x-full flex-col bg-gray-900 text-white transition-transform duration-300 lg:translate-x-0">
             <div class="flex items-start justify-between border-b border-gray-700 px-6 py-5 lg:justify-start">
                 <div>
-                    <div class="text-2xl font-bold">SWALAYAN SEGAR</div>
+                    <div class="text-2xl font-bold">MarketManager</div>
                     <div class="mt-1 text-sm font-normal text-gray-200">
                         Halo, {{ Auth::check() ? Auth::user()->name : 'Guest' }} <br>
                         <span class="text-xs text-gray-400">({{ Auth::check() ? Auth::user()->role : '-' }})</span>

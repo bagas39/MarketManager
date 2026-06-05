@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrasi - Swalayan Segar</title>
+    <title>Registrasi - MarketManager</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>body { font-family: 'Inter', sans-serif; }</style>
@@ -14,7 +14,7 @@
 
     <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
         <div class="text-center mb-8">
-            <h1 class="text-2xl font-bold text-gray-800">SWALAYAN SEGAR</h1>
+            <h1 class="text-2xl font-bold text-gray-800">MarketManager</h1>
             <p class="text-gray-500 text-sm mt-1">Buat akun pegawai baru</p>
         </div>
 

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Kasir - Swalayan Segar')
+@section('title', 'Kasir - MarketManager')
 
 @section('content')
 <header class="mb-6">

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Transaksi Pembelian - Swalayan Segar')
+@section('title', 'Transaksi Pembelian - MarketManager')
 
 @section('content')
     @include('components.mobile-header', ['title' => 'Pembelian'])

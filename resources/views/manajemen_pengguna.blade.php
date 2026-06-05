@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Manajemen Pengguna - Swalayan Segar')
+@section('title', 'Manajemen Pengguna - MarketManager')
 
 @section('content')
     @include('components.mobile-header', ['title' => 'Manajemen Pengguna'])

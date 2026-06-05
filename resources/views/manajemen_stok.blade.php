@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Manajemen Stok - Swalayan Segar')
+@section('title', 'Manajemen Stok - MarketManager')
 
 @push('styles')
 <style>
