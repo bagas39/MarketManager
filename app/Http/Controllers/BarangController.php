@@ -67,6 +67,13 @@ class BarangController extends Controller
                 return response()->json(['success' => false, 'message' => 'Barang tidak ditemukan.'], 404);
             }
 
+            if ($barang->detailPembelians()->exists() || $barang->detailTransaksis()->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Barang tidak dapat dihapus karena sudah digunakan pada riwayat transaksi atau pembelian.'
+                ], 400);
+            }
+
             if (($barang->stok ?? 0) > 0) {
                 return response()->json(['success' => false, 'message' => 'Barang masih memiliki stok, tidak dapat dihapus.'], 400);
             }

@@ -6,44 +6,121 @@
 <style>
     .pagination-button { 
         padding: 0.5rem 1rem; 
-        border: 1px solid #D1D5DB; 
+        border: 1px solid #CBD5E1; 
         background-color: white; 
         border-radius: 0.375rem; 
         font-weight: 500; 
-        color: #374151; 
+        color: #475569; 
         transition: background-color 0.2s; 
     }
-    .pagination-button:hover:not(:disabled) { background-color: #F9FAFB; }
+    .pagination-button:hover:not(:disabled) { background-color: #F8FAFC; }
     .pagination-button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    @media (min-width: 1024px) {
+        main {
+            flex: 0 0 calc(100vw - 16rem);
+            width: calc(100vw - 16rem);
+            max-width: calc(100vw - 16rem);
+            min-width: 0;
+        }
+    }
+
+    .stok-table-card {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    .stok-table-card .overflow-x-auto {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .stok-table-card table {
+        width: 100%;
+        min-width: 0;
+        table-layout: fixed;
+    }
+
+    .stok-table-card th,
+    .stok-table-card td {
+        padding-left: 0.4rem !important;
+        padding-right: 0.4rem !important;
+        font-size: 0.68rem !important;
+        line-height: 1.2rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .stok-table-card th:nth-child(1),
+    .stok-table-card td:nth-child(1) {
+        width: 17%;
+    }
+
+    .stok-table-card th:nth-child(2),
+    .stok-table-card td:nth-child(2) {
+        width: 20%;
+    }
+
+    .stok-table-card th:nth-child(3),
+    .stok-table-card td:nth-child(3) {
+        width: 15%;
+    }
+
+    .stok-table-card th:nth-child(4),
+    .stok-table-card td:nth-child(4),
+    .stok-table-card th:nth-child(5),
+    .stok-table-card td:nth-child(5) {
+        width: 12%;
+    }
+
+    .stok-table-card th:nth-child(6),
+    .stok-table-card td:nth-child(6) {
+        width: 7%;
+        text-align: center !important;
+    }
+
+    .stok-table-card th:nth-child(7),
+    .stok-table-card td:nth-child(7) {
+        width: 12%;
+        text-align: center !important;
+    }
+
+    .stok-table-card td button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 46px;
+        padding: 0.25rem 0.45rem !important;
+        font-size: 0.65rem !important;
+        line-height: 1rem;
+        white-space: nowrap;
+    }
 </style>
 @endpush
 
 @section('content')
-    @include('components.mobile-header', ['title' => 'Manajemen Stok'])
-<header class="mb-6">
-    <h1 class="text-3xl font-bold text-gray-800">Manajemen Stok</h1>
-</header>
+@include('components.mobile-header', ['title' => 'Manajemen Stok'])
 
-<div class="mb-6 rounded-lg bg-white p-4 shadow-md lg:p-4">
-    <div class="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-center lg:gap-2">
-        <div class="md:col-span-3">
-            <input type="date" id="start-date" class="w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-green-500 lg:px-3 lg:py-2" aria-label="Tanggal awal">
-        </div>
-        <div class="hidden text-center text-gray-500 md:col-span-1 md:block">-</div>
-        <div class="md:col-span-3">
-            <input type="date" id="end-date" class="w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-green-500 lg:px-3 lg:py-2" aria-label="Tanggal akhir">
-        </div>
-        <div class="relative md:col-span-4">
-            <input type="text" id="stok-search-input" placeholder="Cari Nama Barang / ID..." class="w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-green-500 lg:px-3 lg:py-2">
-        </div>
-        <div class="md:col-span-1">
-            <button id="search-btn" class="w-full rounded-lg bg-green-600 px-4 py-2 font-semibold text-white transition hover:bg-green-700 lg:px-3 lg:py-2">Cari</button>
-        </div>
+<h1 class="mb-5 text-2xl font-bold text-slate-800">Manajemen Stok</h1>
+
+<div class="stok-table-card rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+
+    <div class="mb-5 flex flex-col gap-3 md:flex-row md:items-center">
+        <input type="date" id="start-date" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 md:w-auto" aria-label="Tanggal awal">
+
+        <span class="hidden text-slate-500 md:block force-md-block">-</span>
+
+        <input type="date" id="end-date" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 md:w-auto" aria-label="Tanggal akhir">
+
+        <input type="text" id="stok-search-input" placeholder="Cari Nama Barang / ID..." class="w-full flex-1 rounded-lg border border-slate-300 px-3 py-2 text-slate-700 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100">
+
+        <button id="search-btn" class="inline-flex w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-700 md:w-auto">Cari</button>
     </div>
-</div>
 
-<div class="bg-white rounded-lg shadow-md overflow-hidden">
-    <x-table-wrapper class="bg-white rounded-lg shadow-md">
+    <x-table-wrapper>
         <thead class="bg-gray-50">
             <tr>
                 <x-table-th extra="lg:px-3 lg:py-2">ID/SKU</x-table-th>
@@ -62,8 +139,8 @@
         </tbody>
     </x-table-wrapper>
     
-    <div class="flex items-center justify-between border-t border-gray-200 p-4 lg:p-3">
-        <div><span id="page-info" class="text-sm text-gray-600">Menampilkan 0-0 dari 0</span></div>
+    <div class="mt-4 flex items-center justify-between border-t border-slate-200 pt-4">
+        <div><span id="page-info" class="text-sm text-slate-500">Menampilkan 0-0 dari 0</span></div>
         <div class="flex space-x-2">
             <button id="prev-button" class="pagination-button" disabled>Sebelumnya</button>
             <button id="next-button" class="pagination-button" disabled>Berikutnya</button>
@@ -80,7 +157,7 @@
             </button>
         </div>
         <p id="message-body" class="text-gray-700"></p>
-        <button onclick="hideMessage()" class="w-full bg-green-600 text-white font-bold py-2 rounded-lg mt-6 hover:bg-green-700 transition-all">Tutup</button>
+        <button onclick="hideMessage()" class="w-full bg-emerald-600 text-white font-bold py-2 rounded-lg mt-6 hover:bg-emerald-700 transition-all">Tutup</button>
     </div>
 </div>
 @endsection

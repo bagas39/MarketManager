@@ -23,7 +23,6 @@ class PembelianFactory extends Factory
         $subtotal = $this->faker->numberBetween(100000, 1000000);
 
         return [
-            // Format rapi dan urut!
             'no_pembelian' => 'PO-' . now()->format('Ymd') . '-' . str_pad(self::$urutan++, 4, '0', STR_PAD_LEFT),
             'nama_supplier' => $this->faker->company(),
             'user_id' => User::factory(),

@@ -147,6 +147,31 @@ class PembelianController extends Controller
         return response()->json(['purchases' => $history]);
     }
 
+    public function detail(Request $request, $noPembelian)
+    {
+        $pembelian = Pembelian::where('no_pembelian', $noPembelian)
+            ->with(['detailPembelians' => function($q) {
+                $q->with('barang');
+            }])
+            ->first();
+
+        if (!$pembelian) {
+            return response()->json(['success' => false, 'message' => 'Pembelian tidak ditemukan.'], 404);
+        }
+
+        $items = $pembelian->detailPembelians->map(function($d) {
+            return [
+                'nama_barang' => $d->barang->nama_barang ?? $d->barang_id,
+                'kategori' => $d->barang->kategori ?? null,
+                'harga_beli' => $d->harga_beli,
+                'kuantitas' => $d->kuantitas,
+                'subtotal' => $d->subtotal
+            ];
+        });
+
+        return response()->json(['success' => true, 'no_pembelian' => $pembelian->no_pembelian, 'items' => $items]);
+    }
+
     public function destroy(Request $request, $noPembelian)
     {
         DB::beginTransaction();

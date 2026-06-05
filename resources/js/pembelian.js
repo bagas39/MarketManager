@@ -211,6 +211,7 @@ async function loadHistory() {
                                 <span class="text-sm font-bold text-emerald-600 ml-2">${formatIDR(p.total_beli)}</span>
                             </div>
                             <div class="flex items-center space-x-2">
+                                <button onclick="viewPurchaseDetail('${escapeHtml(p.id_pembelian)}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs font-semibold">Detail</button>
                                 <button onclick="deletePurchase('${escapeHtml(p.id_pembelian)}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold">Hapus</button>
                             </div>
                         </div>
@@ -246,6 +247,67 @@ window.deletePurchase = async function(noPembelian) {
     } catch(e) {
         modal('Error Jaringan', e.message);
     }
+}
+
+window.viewPurchaseDetail = async function(noPembelian) {
+    if (!noPembelian) return;
+    try {
+        const res = await fetch(`/pembelian/${encodeURIComponent(noPembelian)}/detail`, {
+            headers: { 'Accept': 'application/json' }
+        });
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+            return modal('Gagal', json.message || 'Gagal memuat detail pembelian.');
+        }
+
+        const items = json.items || [];
+        if (items.length === 0) {
+            return showDetailModal(`Detail ${noPembelian}`, `<div class="text-sm text-gray-600">Tidak ada item.</div>`);
+        }
+
+        let rows = '';
+        items.forEach(it => {
+            rows += `<tr class="border-b"><td class="px-3 py-2 text-sm">${escapeHtml(it.nama_barang)}</td><td class="px-3 py-2 text-sm">${escapeHtml(it.kategori || '-')}</td><td class="px-3 py-2 text-sm text-right">${formatIDR(it.harga_beli)}</td><td class="px-3 py-2 text-sm text-center">${escapeHtml(it.kuantitas)}</td><td class="px-3 py-2 text-sm text-right font-bold">${formatIDR(it.subtotal)}</td></tr>`;
+        });
+
+        const html = `
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="text-xs text-gray-500 bg-gray-50">
+                        <tr>
+                            <th class="px-3 py-2 text-left">Nama</th>
+                            <th class="px-3 py-2 text-left">Kategori</th>
+                            <th class="px-3 py-2 text-right">Harga</th>
+                            <th class="px-3 py-2 text-center">Qty</th>
+                            <th class="px-3 py-2 text-right">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        showDetailModal(`Detail ${noPembelian}`, html);
+
+    } catch (e) {
+        modal('Error Jaringan', e.message);
+    }
+};
+
+function showDetailModal(title, htmlBody) {
+    const titleEl = document.getElementById('msg-title');
+    const bodyEl = document.getElementById('msg-body');
+    const modalEl = document.getElementById('msg-modal');
+    if (!titleEl || !bodyEl || !modalEl) {
+        alert(title + '\n\n' + (htmlBody.replace(/<[^>]+>/g, '') || ''));
+        return;
+    }
+    titleEl.textContent = title;
+    titleEl.className = 'font-bold text-xl mb-2 text-slate-800';
+    bodyEl.innerHTML = htmlBody;
+    modalEl.classList.remove('hidden');
 }
 
 document.getElementById('refresh-history-btn')?.addEventListener('click', loadHistory);

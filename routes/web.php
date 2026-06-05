@@ -62,6 +62,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/transaksi_pembelian', [PembelianController::class, 'index']);
         Route::post('/pembelian/store', [PembelianController::class, 'store']);
         Route::get('/pembelian/history', [PembelianController::class, 'history']);
+        Route::get('/pembelian/{no_pembelian}/detail', [PembelianController::class, 'detail']);
         Route::delete('/pembelian/{no_pembelian}', [PembelianController::class, 'destroy']);
     });
 
