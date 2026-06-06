@@ -25,6 +25,21 @@ Dokumentasi ini berisi panduan cepat menjalankan, menguji, dan memahami fitur ut
 - Frontend JS: `resources/js` (mis. `kasir.js`, `manajemen_stok.js`)
 - Tests: `tests/Feature`, `tests/Unit`
 
+## Akses Aplikasi
+
+**Production (Live):** https://marketmanager.sevalla.app/
+
+### Akun Demo
+
+| Role | Email | Password | Akses |
+|------|-------|----------|-------|
+| Owner | owner@example.com | password | Laporan keuangan |
+| Supervisor | spv@example.com | password | Transaksi penjualan, manajemen pengguna, kasir |
+| Kasir | kasir@example.com | password | Kasir / Point of Sale |
+| Gudang | gudang@example.com | password | Stok, pembelian, stok opname, prediksi stok |
+
+---
+
 ## Instalasi & Setup (lokal, XAMPP)
 1. Clone repository
 2. Install dependensi PHP dan Node
