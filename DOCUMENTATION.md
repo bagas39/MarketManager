@@ -40,9 +40,9 @@ npm install
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=market_manager
-DB_USERNAME=root
-DB_PASSWORD=
+DB_DATABASE=your_db
+DB_USERNAME=your_user
+DB_PASSWORD=your_pass
 
 XENDIT_SECRET_KEY=xnd_development_...
 XENDIT_WEBHOOK_TOKEN=your_webhook_token

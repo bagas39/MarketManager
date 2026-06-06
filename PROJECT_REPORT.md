@@ -61,7 +61,7 @@ Kasir (polling) → status paid → konfirmasi sukses
 - Verifikasi menggunakan `x-callback-token` header dari Xendit
 - Proses pembayaran menggunakan database transaction + `lockForUpdate` untuk mencegah race condition
 
-## 5. Kesesuaian dengan Rubrik Penilaian PAW
+## 5. Fitur Lain
 
 ### 5.1 Functional Requirements
 - Create, Read, Update, dan Delete tersedia pada fitur utama yang relevan.
@@ -135,9 +135,9 @@ npm install
 Salin `.env.example` menjadi `.env`, atur database dan Xendit:
 ```env
 DB_CONNECTION=mysql
-DB_DATABASE=market_manager
-DB_USERNAME=root
-DB_PASSWORD=
+DB_DATABASE=your_db
+DB_USERNAME=your_user
+DB_PASSWORD=your_pass
 
 XENDIT_SECRET_KEY=xnd_development_...
 XENDIT_WEBHOOK_TOKEN=your_webhook_token
@@ -177,15 +177,6 @@ Area yang diuji:
 - Prediksi stok
 - Transaksi penjualan (CRUD)
 
-## 10. Catatan Demo
-Saat demo, urutan yang disarankan:
-1. Login ke aplikasi
-2. Tunjukkan manajemen barang / stok
-3. Tunjukkan transaksi kasir — demo metode tunai
-4. Tunjukkan transaksi kasir — demo metode QRIS (buka halaman Xendit)
-5. Tunjukkan perubahan data di daftar transaksi
-6. Tunjukkan laporan keuangan dan export PDF
-7. Tunjukkan hasil `php artisan test`
 
-## 11. Penutup
+## 10. Penutup
 Project MarketManager dibuat untuk memenuhi kebutuhan pengelolaan toko berbasis web dengan fokus pada CRUD, database, interaktivitas frontend, integrasi pembayaran digital (Xendit QRIS), testing, dan dokumentasi yang jelas.
