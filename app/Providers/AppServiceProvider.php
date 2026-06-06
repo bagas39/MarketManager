@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Barryvdh\DomPDF\ServiceProvider as DomPdfServiceProvider;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
